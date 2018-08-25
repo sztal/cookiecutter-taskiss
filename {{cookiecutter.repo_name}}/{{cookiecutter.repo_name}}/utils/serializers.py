@@ -1,11 +1,11 @@
 """Serializer and deserializer functions and classes."""
 # pylint: disable=E0202
 from datetime import datetime, date
-from json import JSONEncoder
+from json import JSONEncoder as _JSONEncoder
 from scrapy import Item
 
 
-class SmartJSONEncoder(JSONEncoder):
+class JSONEncoder(_JSONEncoder):
     """JSON serializer handling :py:class:`datetime.datetime` objects.
 
     It also serializes :py:class:`scrapy.Item` instances.

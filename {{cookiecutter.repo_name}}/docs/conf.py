@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable-all
 #
 # complexity documentation build configuration file, created by
 # sphinx-quickstart on Tue Jul  9 22:26:36 2013.
@@ -192,8 +193,9 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', '{{ cookiecutter.repo_name }}.tex', u'{{ cookiecutter.project_name }} Documentation',
-   u'{{ cookiecutter.full_name }}', 'manual'),
+    ('index', '{{ cookiecutter.repo_name }}.tex',
+     u'{{ cookiecutter.project_name }} Documentation',
+     u'{{ cookiecutter.full_name }}', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -222,7 +224,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', '{{ cookiecutter.repo_name }}', u'{{ cookiecutter.project_name }} Documentation',
+    ('index', '{{ cookiecutter.repo_name }}',
+     u'{{ cookiecutter.project_name }} Documentation',
      [u'{{ cookiecutter.full_name }}'], 1)
 ]
 
@@ -236,9 +239,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', '{{ cookiecutter.repo_name }}', u'{{ cookiecutter.project_name }} Documentation',
-   u'{{ cookiecutter.full_name }}', '{{ cookiecutter.repo_name }}', 'One line description of project.',
-   'Miscellaneous'),
+    ('index', '{{ cookiecutter.repo_name }}', u'{{ cookiecutter.project_name }} Documentation',
+     u'{{ cookiecutter.full_name }}', '{{ cookiecutter.repo_name }}', 'One line description of project.',
+     'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.

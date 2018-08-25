@@ -51,7 +51,9 @@ setup(
         'librabbitmq>=2.0.0,<3',
         'networkx>=2.1,<3',
         'matplotlib>=2.2.3,<3',
-        'click>=6.7,<7'
+        'click>=6.7,<7',
+        'mongoengine>=0.15.3,<1',
+        'scrapy>=1.5.1,<2'
     ],
     license='MIT',
     zip_safe=False,

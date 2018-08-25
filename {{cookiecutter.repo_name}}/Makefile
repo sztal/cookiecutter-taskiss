@@ -33,11 +33,17 @@ clean-tox:
 lint:
 	flake8 {{ cookiecutter.repo_name }} test
 
-test:
+test-quick:
 	py.test
 
-test-all:
+test:
 	py.test --run-tasks
+
+test-pylint:
+	py.test --pylint -m pylint
+
+test-all:
+	py.test --pylint --run-tasks
 
 test-tox:
 	tox

@@ -6,55 +6,87 @@ for data collection and/or long computations.
 # pylint: disable=W0613,W0221,W0212
 import os
 import json
-from collections import deque
+from collections import deque, namedtuple
 from logging import getLogger
 from itertools import count
-from smcore import get_persistence_path
-from smcore.misc.path import make_filepath
-from smcore.odm.utils import make_bulk_update, action_hook_set
-from smcore.serializers import SmartJsonEncoder
-from smcore.misc import safe_print
+from {{ cookiecutter.repo_name }} import get_persistence_path
+from {{ cookiecutter.repo_name }}.utils.path import make_path, make_filepath
+from {{ cookiecutter.repo_name }}.persistence.mongo.utils import make_bulk_update, action_hook_set
+from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
+from {{ cookiecutter.repo_name }}.utils import safe_print
+from {{ cookiecutter.repo_name }}.persistence.abc import AbstractPersistence
 
 
-class Persistence(AttributeManagerMixin):
-    """Abstract base persistence class.
+ConfigPersistencePath = namedtuple('ConfigPersistencePath', ['persistence_path'])
+
+
+class BasePersistence(AbstractPersistence):
+    """Base persistence class.
 
     It defines the main persistence interface which is the `persist` method.
+
+    Attributes
+    ----------
+    item_name : str
+        Name of the items being processed.
     """
-
-    def __init__(self):
+    def __init__(self, item_name='item'):
         """Initilization method."""
-        self.counter = count(start=1)
-        self.n_processed = None
+        self._counter = count(start=1)
+        self._count = 0
+        self._cfg = ConfigPersistencePath(get_persistence_path())
+        self.item_name = item_name
 
-    def persist(self, *args, **kwds):
+    @property
+    def count(self):
+        """Count of processed items getter."""
+        return self._count
+
+    @property
+    def cfg(self):
+        """Get persistence config."""
+        return self._cfg
+
+    def persist(self):
         """Persist an object."""
-        errmsg = "Class '{}' does not implement 'persist' interface.".format(
+        errmsg = "Class '{}' does not implement 'persist' method.".format(
             self.__class__.__name__
         )
         raise NotImplementedError(errmsg)
 
-    def get_counter(self, print_num=True, msg="\rProcessing item no. {} ..."):
-        """Increment and get counter number.
+    def inc(self, print_num=True, item_name=None,
+            msg="\rProcessing {item_name} no. {n}", **kwds):
+        """Increment counter of processed items.
 
         Parameters
         ----------
         print_num : bool
-            Should number of processed items be printed.
+            Should number of processed items be printed to *stdout*.
+        item_name : str
+            Optional item name to overwrite instance level configuration.
         msg : str
             Formattable string with a message.
+            It needs to have at least two interpolated parts with named
+            `item_name` and `n`. More named interpolated parts may be used
+            adn they can be supplied via `**kwds`.
+        **kwds :
+            Optional keyword arguments used to format the message string.
         """
-        n = next(self.counter)
-        self.n_processed = n
+        item_name = item_name if item_name is None else self.item_name
+        n = next(self._counter)
+        self._count = n
         if print_num and n > 1:
-            safe_print(msg.format(n), nl=False)
+            safe_print(msg.format(tem_name=item_name, n=n, **kwds))
         return n
 
 
-class DiskPersistence(Persistence):
-    """Disk persistence component class."""
+class DiskPersistence(BasePersistence):
+    """Disk persistence component class.
 
-    def __init__(self, filename=None, dirpath=None, **kwds):
+    This is a base class (does not define proper `persist` method)
+    used as a core for concrete peristence classes that write to disk.
+    """
+    def __init__(self, filename, dirpath=None, item_name='item', **kwds):
         """Initialization method.
 
         Attributes
@@ -67,42 +99,71 @@ class DiskPersistence(Persistence):
         **kwds :
             Parameters passed to `get_persistence_path`.
         """
-        super().__init__()
+        super().__init__(item_name)
         self._filepath = None
         self.filename = filename
-        self.dirpath = \
-            dirpath if dirpath else get_persistence_path(**kwds)
+        self.dirpath = dirpath if dirpath else self.cfg.persistence_path
 
     @property
     def filepath(self):
         """str: Persistence filepath getter."""
         if not self._filepath:
-            self._filepath = \
-                make_filepath(self.filename, self.dirpath, inc_if_taken=True)
+            self._filepath = make_path(
+                make_filepath(self.filename, self.dirpath, inc_if_taken=True),
+                create_dir=True
+            )
         return self._filepath
 
+    def dump(self, obj):
+        """Dump item to disk."""
+        errmsg = "Class '{}' does not implement 'dump' method.".format(
+            self.__class__.__name__
+        )
+        raise NotImplementedError(errmsg)
 
-class JsonDiskPersistence(DiskPersistence):
-    """JSON lines disk persitence component class.
+    def load(self, data):
+        """Load item from data saved to disk."""
+        errmsg = "Class '{}' does not implement 'load' method.".format(
+            self.__class__.__name__
+        )
+        raise NotImplementedError(errmsg)
 
-    Attributes
-    ----------
-    filename : str
-        Filename format string.
-        Should have '{}' in place of persistence file number.
-    dirpath : str
-        Path to persistence storage directory.
-    json_serializer : json.JSONEncoder
-        `JSONEncoder` subclass defining JSON serializer.
-        Defaults to `SmartJsonEncoder`.
-    **kwds :
-        Parameters passed to `get_persistence_path`.
-    """
+    def load_persisted_data(self, filepath=None):
+        """Load data persisted to disk.
 
-    def __init__(self, filename=None, dirpath=None,
-                 json_serializer=SmartJsonEncoder, **kwds):
-        """Initialization method."""
-        super().__init__(filename, dirpath, **kwds)
+        Parameters
+        ----------
+        filepath : str or None
+            Filepath to read from.
+            If `None` then defaults to the instance attribute.
+        """
+        errmsg = "Class '{}' does not implement 'load_persisted_data' method.".format(
+            self.__class__.__name__
+        )
+        raise NotImplementedError(errmsg)
+
+
+class JSONLinesPersistence(DiskPersistence):
+    """JSON lines disk persitence component class."""
+    def __init__(self, filename, dirpath=None, json_serializer=JSONEncoder,
+                 item_name='item', **kwds):
+        """Initialization method.
+
+        Parameters
+        ----------
+        filename : str
+            Filename format string.
+            Should have '{}' in place of persistence file number.
+        dirpath : str
+            Path to persistence storage directory.
+        json_serializer : json.JSONEncoder
+            :py:class:`json.JSONEncoder` subclass defining JSON serializer.
+            Defaults to
+            :py:class:`{{ cookiecutter.repo_name }}.utils.serializers.JSONEncoder`.
+        **kwds :
+            Parameters passed to `get_persistence_path`.
+        """
+        super().__init__(filename, dirpath, item_name, **kwds)
         self.json_serializer = json_serializer
 
     def persist(self, doc, print_num=True):
@@ -116,12 +177,11 @@ class JsonDiskPersistence(DiskPersistence):
             Should number of processed documents be printed.
         """
         with open(self.filepath, 'a') as f:
-            if print_num:
-                self.get_counter(print_num=True)
-            line = self.jsondump(doc)
+            self.inc(print_num=print_num)
+            line = self.dump(doc)
             f.write(line+"\n")
 
-    def jsondump(self, obj):
+    def dump(self, obj):
         """Dump an object to JSON string.
 
         This method handles date and datetime objects.
@@ -133,8 +193,37 @@ class JsonDiskPersistence(DiskPersistence):
         """
         return json.dumps(obj, cls=self.json_serializer)
 
+    def load(self, data):
+        """Load JSON object from string.
 
-class MongoPersistence(Persistence):
+        Parameters
+        ----------
+        data : str
+            JSON string.
+        """
+        return json.loads(data.strip())
+
+    def load_persisted_data(self, filepath=None):
+        """Load data persisted to disk.
+
+        Parameters
+        ----------
+        filepath : str or None
+            Filepath to read from.
+            If `None` then defaults to the instance attribute.
+
+        Yields
+        ------
+        dict
+            Persisted items.
+        """
+        filepath = filepath if filepath else self.filepath
+        with open(filepath, 'r') as f:
+            for line in f:
+                yield self.load(line)
+
+
+class MongoPersistence(BasePersistence):
     """MongoDB persistence component class.
 
     Attributes
@@ -158,9 +247,9 @@ class MongoPersistence(Persistence):
     """
 
     def __init__(self, model=None, query_fields=None, batch_size=10**4,
-                 action_hook=action_hook_set, logger=True):
+                 action_hook=action_hook_set, logger=True, item_name='document'):
         """Initialization method."""
-        super().__init__()
+        super().__init__(item_name)
         self.model = model
         self.query_fields = query_fields
         self.batch_size = batch_size

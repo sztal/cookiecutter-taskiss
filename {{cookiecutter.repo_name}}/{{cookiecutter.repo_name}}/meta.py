@@ -23,7 +23,10 @@ def methdispatch(func):
 def __getattr__(self, attr):
     """Attribute lookup for composable classes."""
     components_attr = '_'+self.__class__.__name__+'__components'
-    components = getattr(self, components_attr, [])
+    components = [
+        *(getattr(self, '__components') if '__components' in dir(self) else []),
+        *(getattr(self, components_attr) if components_attr in dir(self) else [])
+    ]
     bases = (self.__class__, *self.__class__.__bases__)
     for base in bases:
         components_attr = '_'+base.__name__+'__components'
@@ -38,6 +41,14 @@ def __getattr__(self, attr):
     msg = "'{}' object has no attribute '{}'".format(self.__class__.__name__, attr)
     raise AttributeError(msg)
 
+def setcomponents(self, components):
+    """Set instance level components."""
+    for nm, component in components:
+        if hasattr(self, nm):
+            errmsg = f"Instance already has attribute '{nm}'"
+            raise AttributeError(errmsg)
+        setattr(self, nm, component)
+    self.__components = components
 
 class Composable(type):
     """Metaclass for injecting easy class composition functionality.
@@ -73,12 +84,11 @@ class Composable(type):
         """Class instance constructor."""
         newclass = super().__new__(cls, name, bases, namespace)
         setattr(newclass, __getattr__.__name__, __getattr__)
+        setattr(newclass, setcomponents.__name__, setcomponents)
         components_attr = '_'+newclass.__name__+'__components'
         for nm, component in getattr(newclass, components_attr, []):
             if hasattr(newclass, nm):
-                errmsg = "Class '{}' already has attribute '{}'".format(
-                    newclass.__name__, nm
-                )
+                errmsg = f"Class '{nm}' already has attribute '{newclass.__name__}'"
                 raise AttributeError(errmsg)
             setattr(newclass, nm, component)
         return newclass

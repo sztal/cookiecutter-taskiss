@@ -10,6 +10,18 @@ from abc import ABCMeta, abstractmethod
 class AbstractPersistence(metaclass=ABCMeta):
     """Abstract base persistence class."""
 
+    @property
+    @abstractmethod
+    def count(self):
+        """Count of processed items."""
+        pass
+
+    @property
+    @abstractmethod
+    def cfg(self):
+        """Persistence config."""
+        pass
+
     @abstractmethod
     def persist(self):
         """Persist a data point / object."""
@@ -18,10 +30,4 @@ class AbstractPersistence(metaclass=ABCMeta):
     @abstractmethod
     def inc(self):
         """Increment counter."""
-        pass
-
-    @property
-    @abstractmethod
-    def count(self):
-        """Count of processed items."""
         pass

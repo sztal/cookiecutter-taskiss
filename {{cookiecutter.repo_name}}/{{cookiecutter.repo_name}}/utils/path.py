@@ -38,13 +38,14 @@ def make_path(*args, create_dir=True, **kwds):
         os.makedirs(dirpath, exist_ok=True, **kwds)
     return path
 
-def make_filepath(filename, dirpath, inc_if_taken=True):
+def make_filepath(filename, dirpath, inc_if_taken=True, **kwds):
     """Make filepath for a given filename.
 
     This function allows for not overwriting existing files
     and incrementing filename counter instead.
     In such a case the filename must be a formattable string
-    with a single placeholder `{}`.
+    with a named placeholder `{n}`. Other named placeholder may be
+    filled through `**kwds`.
 
     Parameters
     ----------
@@ -54,13 +55,15 @@ def make_filepath(filename, dirpath, inc_if_taken=True):
         Directory path.
     inc_if_taken : bool
         Should file counter be used and incremented if a name is already taken.
+    **kwds :
+        Optional keyword arguments passed to the format string.
     """
     n = 0
     _filepath = os.path.join(dirpath, filename)
     filepath = _filepath
     while inc_if_taken:
         n += 1
-        filepath = _filepath.format(n)
+        filepath = _filepath.format(n=n, **kwds)
         if not os.path.exists(filepath):
             break
     return filepath
