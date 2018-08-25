@@ -10,15 +10,22 @@ from collections import Iterable
 from pymongo import UpdateOne, UpdateMany
 
 
-def action_hook_set(doc):
+def action_hook_set(doc, hook='$set', processor=None):
     """Action hook for transforming document into `$set` update statements.
 
     Parameters
     ----------
     doc : dct
-        Valid mongodb document.
+        Valid *MongoDB* document object.
+    hook : str
+        Valid *MongoDB* action hook like `$set` or `$push`.
+    processor: func or None
+        Optional processor function to transform the document.
     """
-    return { '$set': doc }
+    action = { hook: doc }
+    if processor:
+        action[hook] = processor(action[hook])
+    return action
 
 def make_update_op(doc, query_fields, multiple=False, upsert=True,
                    action_hook=action_hook_set, **kwds):

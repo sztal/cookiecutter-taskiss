@@ -4,15 +4,16 @@ import json
 import pytest
 from datetime import datetime
 from {{ cookiecutter.repo_name }}.persistence import JSONLinesPersistence
+from {{ cookiecutter.repo_name }}.persistence import DiskPersistenceConfig
 
 
 @pytest.fixture
 def jl_persistence():
     """Fixture: JSONLinesPersistence."""
-    jl_persistence = JSONLinesPersistence(
+    jl_persistence = JSONLinesPersistence(DiskPersistenceConfig(
         filename='jlpersistence-test-{n}.jl',
         dirpath=os.path.join(os.path.dirname(__file__), 'data', 'persistence')
-    )
+    ))
     yield jl_persistence
     #Teardown part of the fixture
     os.remove(jl_persistence.filepath)

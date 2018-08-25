@@ -7,27 +7,34 @@ persistence on disk, in database and possibly by other means.
 from abc import ABCMeta, abstractmethod
 
 
-class AbstractPersistence(metaclass=ABCMeta):
-    """Abstract base persistence class."""
+class AbstractPersistenceConfig(metaclass=ABCMeta):
+    """Abstract base persistence configuration class."""
+    pass
+
+
+class AbstractDBImporter(metaclass=ABCMeta):
+    """Abstract base database importer class."""
 
     @property
     @abstractmethod
-    def count(self):
-        """Count of processed items."""
+    def connection(self):
+        """Database connection object."""
         pass
 
     @property
     @abstractmethod
     def cfg(self):
-        """Persistence config."""
+        """Importet configuration."""
         pass
 
+    @property
     @abstractmethod
-    def persist(self):
-        """Persist a data point / object."""
+    def logger(self):
+        """Logger object."""
         pass
 
+    @property
     @abstractmethod
-    def inc(self):
-        """Increment counter."""
+    def persistence(self):
+        """Persistence object(s)."""
         pass

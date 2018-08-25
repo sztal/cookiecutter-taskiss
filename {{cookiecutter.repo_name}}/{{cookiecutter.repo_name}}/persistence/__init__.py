@@ -2,38 +2,95 @@
 
 The aim is to inject persistence functionalities into classes
 for data collection and/or long computations.
+
+Attributes
+----------
 """
 # pylint: disable=W0613,W0221,W0212
 import os
 import json
-from collections import deque, namedtuple
+from collections import deque
 from logging import getLogger
 from itertools import count
 from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path, make_path, make_filepath
 from {{ cookiecutter.repo_name }}.persistence.mongo.utils import make_bulk_update, action_hook_set
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.persistence.abc import AbstractPersistence
+from {{ cookiecutter.repo_name }}.persistence.abc import AbstractPersistenceConfig
+from {{ cookiecutter.repo_name }}.meta import Composable
 
 
-ConfigPersistencePath = namedtuple('ConfigPersistencePath', ['persistence_path'])
+class DiskPersistenceConfig(AbstractPersistenceConfig):
+    """Configuration object for
+    :py:class:`{{ cookiecutter.repo_name }}.persistence.DiskPersistence` objects.
+
+    Attributes
+    ----------
+    filename : str
+        Filename format string.
+        Should have '{n}' in place of persistence file number.
+    dirpath : str
+        Absolute path to the persistence directory.
+    """
+    def __init__(self, filename, dirpath):
+        """Initialization method."""
+        self.filename = filename
+        self.dirpath = dirpath
 
 
-class BasePersistence(AbstractPersistence):
+class DBPersistenceConfig(AbstractPersistenceConfig):
+    """Configuration object for
+    :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistence` objects.
+
+    Attributes
+    ----------
+    query : callable or any
+        Some object representing the update query.
+        If callable then it is evaluated on the array of records to update.
+    processor : callable or None
+        Optional callable to evaluate over all individual records (like map).
+    batch_size : int or None
+        Batch size when updating.
+        If negative or *falsy* then no batch limit is used.
+    n_retry : int or None
+        Number of retries after fail.
+        If negative of *falsy* then only one update attempt is made.
+    backoff_time : int or None
+        Number of seconds to wait before trying to update again after a failure.
+        If negative or *falsy*, then no backoff time is used.
+    backoff_exp : numeric
+        Exponent for exponential backoff scaling of wait times between
+        subsequent update attempts (base 2 is used).
+        Set to 0 to use constant backoff time.
+    """
+    def __init__(self, query, processor=None, batch_size=None, n_retry=2,
+                 backoff_time=5, backoff_exp=1):
+        """Initialization method."""
+        self.query = query
+        self.processor = processor
+        self.batch_size = batch_size
+        self.n_retry = n_retry
+        self.backoff_time = backoff_time
+        self.backoff_exp = backoff_exp
+
+
+class BasePersistence(metaclass=Composable):
     """Base persistence class.
 
     It defines the main persistence interface which is the `persist` method.
 
     Attributes
     ----------
+    cfg : Mapping
+        Persistsence config.
     item_name : str
         Name of the items being processed.
     """
-    def __init__(self, item_name='item'):
+    def __init__(self, cfg, item_name='item'):
         """Initilization method."""
+        self.setcomponents([ ('_cfg', cfg) ])
         self._counter = count(start=1)
         self._count = 0
-        self._cfg = ConfigPersistencePath(get_persistence_path())
         self.item_name = item_name
 
     @property
@@ -79,29 +136,27 @@ class BasePersistence(AbstractPersistence):
         return n
 
 
+# Disk persistence classes ----------------------------------------------------
+
 class DiskPersistence(BasePersistence):
     """Disk persistence component class.
 
     This is a base class (does not define proper `persist` method)
     used as a core for concrete peristence classes that write to disk.
     """
-    def __init__(self, filename, dirpath=None, item_name='item', **kwds):
+    def __init__(self, cfg, item_name='item'):
         """Initialization method.
 
         Attributes
         ----------
-        filename : str
-            Filename format string.
-            Should have '{}' in place of persistence file number.
-        dirpath : str
-            Path to persistence storage directory.
-        **kwds :
-            Parameters passed to `get_persistence_path`.
+        cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DiskPersistenceConfig`
+            Disk persistence config providing the persistence directory path
+            and the filename.
+        item_name : str
+            Item name.
         """
-        super().__init__(item_name)
+        super().__init__(cfg, item_name)
         self._filepath = None
-        self.filename = filename
-        self.dirpath = dirpath if dirpath else self.cfg.persistence_path
 
     @property
     def filepath(self):
@@ -144,25 +199,23 @@ class DiskPersistence(BasePersistence):
 
 class JSONLinesPersistence(DiskPersistence):
     """JSON lines disk persitence component class."""
-    def __init__(self, filename, dirpath=None, json_serializer=JSONEncoder,
-                 item_name='item', **kwds):
+
+    def __init__(self, cfg, json_serializer=JSONEncoder, item_name='item'):
         """Initialization method.
 
         Parameters
         ----------
-        filename : str
-            Filename format string.
-            Should have '{}' in place of persistence file number.
-        dirpath : str
-            Path to persistence storage directory.
+        cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DiskPersistenceConfig`
+            Disk persistence config providing the persistence directory path
+            and the filename.
         json_serializer : json.JSONEncoder
             :py:class:`json.JSONEncoder` subclass defining JSON serializer.
             Defaults to
             :py:class:`{{ cookiecutter.repo_name }}.utils.serializers.JSONEncoder`.
-        **kwds :
-            Parameters passed to `get_persistence_path`.
+        item_name : str
+            Item name.
         """
-        super().__init__(filename, dirpath, item_name, **kwds)
+        super().__init__(cfg, item_name)
         self.json_serializer = json_serializer
 
     def persist(self, doc, print_num=True):
@@ -222,56 +275,33 @@ class JSONLinesPersistence(DiskPersistence):
                 yield self.load(line)
 
 
-class MongoPersistence(BasePersistence):
-    """MongoDB persistence component class.
+# Database persistence classes ------------------------------------------------
+
+class DBPersistence(BasePersistence):
+    """Database persistence base class.
 
     Attributes
     ----------
-    model : mongoengine.Document
-        Mongoengine collection model class.
-    query_fields : str or iterable of str
-        List of field names to use for update query.
-    batch_size : int
-        Default batch size when making bulk updates.
-        Nonpositive values mean that all documents are updated in one batch.
-    action_hook : func
-        Action hook function for creating MongoDB update statements
-        in the case of update mode.
-        Default to standard `$set` statement.
-    logger : bool or str
-        Should logger be used to log bulk updates.
-        If `True` then the root logger is used.
-        If `False` no logging.
-        If it is a `str` then a logger of given name is used.
+    model : a database connection or model
+
     """
 
-    def __init__(self, model=None, query_fields=None, batch_size=10**4,
-                 action_hook=action_hook_set, logger=True, item_name='document'):
+class MongoPersistence(BasePersistence):
+    """MongoDB persistence class.
+
+    Attributes
+    ----------
+    conn : :py:class:`mongoengine.Document`
+        *Mongoengine* collection model class.
+    cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.MongoPersistenceConfig`
+        Configuration object.
+    logger : :py:class:`logging.Logger`
+        Optional logger object.
+    """
+    def __init__(self, coll, cfg, item_name='document', logger=None):
         """Initialization method."""
-        super().__init__(item_name)
-        self.model = model
-        self.query_fields = query_fields
-        self.batch_size = batch_size
-        self.action_hook = action_hook_set
-        self.documents = deque()
-        self.already_dropped_collection = False
-        self.set_logger(logger)
-
-    def set_logger(self, name=None):
-        """Set logger object.
-
-        Parameters
-        ----------
-        name : bool, str or None
-            Name of the logger to set. Use root logger if `True`.
-            Do not set any logger if `None`.
-        """
-        if name and isinstance(name, str):
-            logger = getLogger(name)
-        elif name:
-            logger = getLogger()
-        else:
-            logger = None
+        super().__init__(cfg=cfg, item_name=item_name)
+        self.coll = coll
         self.logger = logger
 
     def persist(self, doc=None, print_num=True, log=True, **kwds):
@@ -287,9 +317,9 @@ class MongoPersistence(BasePersistence):
             Parameters passed to `update`.
         """
         if doc is not None:
-            self.get_counter(print_num=print_num)
-            if hasattr(self.model, 'from_dict'):
-                doc = self.model.from_dict(doc, only_dict=True)
+            self.inc(print_num=print_num)
+            if hasattr(self.coll, 'from_dict'):
+                doc = self.coll.from_dict(doc, only_dict=True)
             self.documents.appendleft(doc)
         updated = self.update(**kwds)
         if updated and log:
