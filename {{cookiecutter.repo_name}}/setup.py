@@ -53,7 +53,8 @@ setup(
         'matplotlib>=2.2.3,<3',
         'click>=6.7,<7',
         'mongoengine>=0.15.3,<1',
-        'scrapy>=1.5.1,<2'
+        'scrapy>=1.5.1,<2',
+        'dateparser>=0.7.0,<1'
     ],
     license='MIT',
     zip_safe=False,

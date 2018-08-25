@@ -9,8 +9,7 @@ import json
 from collections import deque, namedtuple
 from logging import getLogger
 from itertools import count
-from {{ cookiecutter.repo_name }} import get_persistence_path
-from {{ cookiecutter.repo_name }}.utils.path import make_path, make_filepath
+from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path, make_path, make_filepath
 from {{ cookiecutter.repo_name }}.persistence.mongo.utils import make_bulk_update, action_hook_set
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
 from {{ cookiecutter.repo_name }}.utils import safe_print

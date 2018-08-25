@@ -92,3 +92,13 @@ class Composable(type):
                 raise AttributeError(errmsg)
             setattr(newclass, nm, component)
         return newclass
+
+
+class Singleton(type):
+    """Singleton metaclass."""
+    instance = None
+    def __call__(cls, *args, **kwds):
+        """Calling method."""
+        if not cls.instance:
+            cls.instance = super().__call__(*args, **kwds)
+        return cls.instance
