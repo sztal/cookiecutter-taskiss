@@ -181,10 +181,10 @@ class Composable(type):
     accessing by name while keeping the order fixed.
 
     Special methods
-    :py:meth:`{{ cookiecutter.repo_name }}.meta.getcomponents_`,
-    :py:meth:`{{ cookiecutter.repo_name }}.meta.setcomponents_`,
-    :py:meth:`{{ cookiecutter.repo_name }}.meta.getattribute_`
-    :py:meth:`{{ cookiecutter.repo_name }}.meta.setattribute_`,
+    :py:meth:`{{ cookiecutter.repo_name }}.base.meta.getcomponents_`,
+    :py:meth:`{{ cookiecutter.repo_name }}.base.meta.setcomponents_`,
+    :py:meth:`{{ cookiecutter.repo_name }}.base.meta.getattribute_`
+    :py:meth:`{{ cookiecutter.repo_name }}.base.meta.setattribute_`,
     are defined with trailing underscore to avoid name collisions.
     """
     def __new__(cls, name, bases, namespace, **kwds):

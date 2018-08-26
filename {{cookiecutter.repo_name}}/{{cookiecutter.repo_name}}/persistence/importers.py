@@ -4,11 +4,11 @@ Importers are helper objects responsible for importing data to various storage
 facilities. They are meant to be composed of
 :py:module:`{{ cookiecutter.repo_name }}.persistence` objects.
 """
+# pylint: disable=E1101,W0221
 import json
-from {{ cookiecutter.repo_name }}.persistence.abc import AbstractImporter
 
 
-class DataImporter(AbstractImporter):
+class DataImporter:
     """Data importer base class."""
 
     def __init__(self, persistence):

@@ -1,7 +1,7 @@
-"""Test cases for :py:module:`{{ cookiecutter.repo_name }}.meta`."""
+"""Test cases for :py:module:`{{ cookiecutter.repo_name }}.base.meta`."""
 import re
 import pytest
-from {{ cookiecutter.repo_name }}.meta import Composable
+from {{ cookiecutter.repo_name }}.base.meta import Composable
 
 
 class Something(object):
@@ -44,7 +44,7 @@ def some_instance():
 
 class TestComposable:
     """Test cases for
-    :py:class:`{{ cookiecutter.repo_name }}.meta.Composable`.
+    :py:class:`{{ cookiecutter.repo_name }}.base.meta.Composable`.
     """
     def test_simple(self, some_instance):
         """Simple test case."""

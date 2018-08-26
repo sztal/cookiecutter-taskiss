@@ -15,8 +15,8 @@ from itertools import count
 from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path, make_path, make_filepath
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.meta import Composable
-from {{ cookiecutter.repo_name }}.persistence.cfg import DiskPersistenceConfig
+from {{ cookiecutter.repo_name }}.base.meta import Composable
+from {{ cookiecutter.repo_name }}.base.interface import DiskPersistenceInterface, DBPersistenceInterface
 
 
 class BasePersistence(metaclass=Composable):
@@ -26,28 +26,35 @@ class BasePersistence(metaclass=Composable):
 
     Attributes
     ----------
-    cfg : Mapping
-        Persistsence config.
+    settings : object
+        Persistence settings.
     item_name : str
         Name of the items being processed.
     """
-    def __init__(self, cfg=None, item_name='item'):
+    def __init__(self, settings, item_name='item'):
         """Initilization method."""
-        self.setcomponents_([ ('_cfg', cfg) ])
+        self.setcomponents_([ ('settings', settings) ])
         self._counter = count(start=1)
         self._count = 0
         self.item_name = item_name
         self.queue = deque()
 
+    def __enter__(self):
+        """Enter hook."""
+        pass
+
+    def __exit__(self, type, value, traceback):
+        """Exit hook."""
+        self.finalize()
+
+    def finalize(self):
+        """Finalize update."""
+        pass
+
     @property
     def count(self):
         """Count of processed items getter."""
         return self._count
-
-    @property
-    def cfg(self):
-        """Get persistence config."""
-        return self._cfg
 
     def persist(self):
         """Persist an object."""
@@ -81,7 +88,25 @@ class BasePersistence(metaclass=Composable):
             safe_print(msg.format(item_name=item_name, n=n, **kwds))
         return n
 
-    def log(self, msg="Processed {n} {item_name}s"):
+    def log(self, msg, *args, method='info', **kwds):
+        """Log a message.
+
+        Parameters
+        ----------
+        msg : str
+            Message.
+        method :
+            :py:class:`logging.Logger` logging method name.
+        *args :
+            Positional arguments passed to the logging method.
+        **kwds :
+            Keyword arguments passed to the logging method.
+        """
+        if self.logger:
+            logmethod = getattr(self, method)
+            logmethod(msg, *args, **kwds)
+
+    def log_progress(self, msg="Processed {n} {item_name}s"):
         """Log information about work done.
 
         Parameters
@@ -90,9 +115,10 @@ class BasePersistence(metaclass=Composable):
             Message to log.
             Has to be a formattable string with placeholders `n` and `item_name`.
         """
-        if self.logger and self.batch_size \
-        and self.batch_size > 0 and self.count % self.batch_size == 0:
-            self.logger.info(msg.format(n=self.count, item_name=self.item_name))
+        if not hasattr(self, 'batch_size'):
+            return
+        if self.batch_size and self.batch_size > 0 and self.count % self.batch_size == 0:
+            self.log(msg.format(n=self.count, item_name=self.item_name))
 
 # Disk persistence classes ----------------------------------------------------
 
@@ -102,18 +128,22 @@ class DiskPersistence(BasePersistence):
     This is a base class (does not define proper `persist` method)
     used as a core for concrete peristence classes that write to disk.
     """
-    def __init__(self, cfg=None, item_name='item'):
+    def __init__(self, settings=None, item_name='item', **kwds):
         """Initialization method.
 
         Parameters
         ----------
-        cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DiskPersistenceConfig`
-            Disk persistence config providing the persistence directory path
-            and the filename.
+        settings : :py:class:`{{ cookiecutter.repo_name }}.base.interface.DiskPersistenceInterface`
+            Disk persistence settings object.
         item_name : str
             Item name.
+        **kwds :
+            Settings passed to `DiskPersistenceSettings` constructor
+            if `settings=None`.
         """
-        super().__init__(cfg, item_name)
+        if settings is None:
+            settings = DiskPersistenceInterface(**kwds)
+        super().__init__(settings, item_name)
         self._filepath = None
 
     @property
@@ -158,15 +188,14 @@ class DiskPersistence(BasePersistence):
 class JSONLinesPersistence(DiskPersistence):
     """JSON lines disk persitence component class."""
 
-    def __init__(self, cfg=None, json_serializer=JSONEncoder, item_name='item', **kwds):
+    def __init__(self, settings=None, json_serializer=JSONEncoder, item_name='item', **kwds):
         """Initialization method.
 
         Parameters
         ----------
-        cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DiskPersistenceConfig`
-            Disk persistence config providing the persistence directory path
-            and the filename.
-            If `None` then an instance of `DiskPersistenceConfig`
+        settings : :py:class:`{{ cookiecutter.repo_name }}.base.interface.DiskPersistenceInterface`
+            Settings object.
+            If `None` then an instance of `DiskPersistenceInterface`
             is created from `**kwds`.
         json_serializer : json.JSONEncoder
             :py:class:`json.JSONEncoder` subclass defining JSON serializer.
@@ -176,15 +205,13 @@ class JSONLinesPersistence(DiskPersistence):
             Item name.
         **kwds :
             Other arguments passed to
-            :py:class:`{{ cookiecutter.repo_name }}.persistence.cfg.DiskPersistenceConfig`
-            when `cfg` is `None`.
+            :py:class:`{{ cookiecutter.repo_name }}.base.interface.DiskPersistenceInteface`
+            when `settings=None`.
         """
-        if not cfg:
-            cfg = DiskPersistenceConfig(**kwds)
-        super().__init__(cfg, item_name)
+        super().__init__(settings, item_name, **kwds)
         self.json_serializer = json_serializer
 
-    def persist(self, doc, print_num=True):
+    def persist(self, doc, print_num=True, **kwds):
         """Persist a json-formattable document.
 
         Parameters
@@ -193,11 +220,15 @@ class JSONLinesPersistence(DiskPersistence):
             Any object that can be dumped to a JSON string.
         print_num : bool
             Should number of processed documents be printed.
+        **kwds :
+            Keyword arguments passed to
+            :py:meth:`{{ cookiecutter.repo_name }}.persistence.DiskPersistence.log_progress`.
         """
         with open(self.filepath, 'a') as f:
             self.inc(print_num=print_num)
             line = self.dump(doc)
             f.write(line+"\n")
+        self.log_progress()
 
     def dump(self, obj):
         """Dump an object to JSON string.
@@ -246,17 +277,22 @@ class JSONLinesPersistence(DiskPersistence):
 class DBPersistence(BasePersistence):
     """Database persistence base class."""
 
-    def __init__(self, cfg, item_name='record'):
+    def __init__(self, settings=None, item_name='record', **kwds):
         """Initialization method.
 
         Parameters
         ----------
-        cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistenceConfig`
-            Database persistence configuration.
+        settings : :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistenceInterface`
+            Database persistence settings.
         item_name : str
             Item name.
+        **kwds :
+            Keyword arguments used to construct `DBPersistenceInterface`
+            if `settings=None`.
         """
-        super().__init__(cfg, item_name)
+        if settings is None:
+            settings = DBPersistenceInterface(**kwds)
+        super().__init__(settings, item_name)
 
     def get_model_name(self):
         """Get model name."""
@@ -269,15 +305,3 @@ class DBPersistence(BasePersistence):
         raise NotImplementedError("'{}' does not implement 'drop_model_data'".format(
             self.__class__.__name__
         ))
-
-    def __enter__(self):
-        """Enter hook."""
-        pass
-
-    def __exit__(self, type, value, traceback):
-        """Exit hook."""
-        self.finalize()
-
-    def finalize(self):
-        """Finalize update."""
-        pass

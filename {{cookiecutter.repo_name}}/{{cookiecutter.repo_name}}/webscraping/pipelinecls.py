@@ -2,7 +2,7 @@
 # pylint: disable=E1101,W0613
 import json
 from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path
-from {{ cookiecutter.repo_name }}.meta import Composable
+from {{ cookiecutter.repo_name }}.base.meta import Composable
 
 
 class BaseSpiderItemPipeline(metaclass=Composable):

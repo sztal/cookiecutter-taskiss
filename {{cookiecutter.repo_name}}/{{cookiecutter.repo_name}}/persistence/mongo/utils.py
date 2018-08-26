@@ -5,9 +5,7 @@ See Also
 pymongo
 mongoengine
 """
-# pylint: disable=W0212
 from collections import Iterable
-from pymongo import UpdateOne, UpdateMany
 
 
 def update_action_hook(doc, hook='$set', processor=None):
@@ -26,3 +24,13 @@ def update_action_hook(doc, hook='$set', processor=None):
     if processor:
         action[hook] = processor(action[hook])
     return action
+
+def query_factory(query_or_fields):
+    """Query function factory."""
+    if callable(query_or_fields):
+        return query_or_fields
+    if isinstance(query_or_fields, str) or not isinstance(query_or_fields, Iterable):
+        query_or_fields = [query_or_fields]
+    def query(dct):
+        return { f: dct.pop(f) for f in query_or_fields }
+    return query

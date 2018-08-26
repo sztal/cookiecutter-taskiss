@@ -10,12 +10,10 @@ import time
 from collections import Iterable
 from pymongo import UpdateOne, UpdateMany
 import mongoengine
-from {{ cookiecutter.repo_name }}.persistence.mongo.utils import update_action_hook
-from {{ cookiecutter.repo_name }}.persistence.cfg import DBPersistenceConfig
+from {{ cookiecutter.repo_name }}.persistence.mongo.utils import update_action_hook, query_factory
 from {{ cookiecutter.repo_name }}.persistence import DBPersistence
-
-
-MONGO_URI = 'mongodb://{username}:{password}@{host}:{port}/{db}'
+from {{ cookiecutter.repo_name }}.base.interface import DBPersistenceInterface
+from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
 
 
 def init(user, password, host, port, db, authentication_db=None, use_envvars=True):
@@ -37,9 +35,10 @@ def init(user, password, host, port, db, authentication_db=None, use_envvars=Tru
         Authentication databse name.
         Use `db` if `None`.
     """
+    mongo_uri = 'mongodb://{username}:{password}@{host}:{port}/{db}'
     if not authentication_db:
         authentication_db = db
-    uri = MONGO_URI.format(
+    uri = mongo_uri.format(
         username=user,
         password=password,
         host=host,
@@ -50,41 +49,44 @@ def init(user, password, host, port, db, authentication_db=None, use_envvars=Tru
     return mdb
 
 
-class MongoPersistenceConfig(DBPersistenceConfig):
-    """Mongo persistence configuration class."""
+class MongoPersistenceInterface(DBPersistenceInterface):
+    """Mongo persistence settings interface class.
 
-    def __init__(self, model, query, processor=update_action_hook,
-                 update=True, upsert=True, multiple=False, **kwds):
-        """Initialization method.
+    model : a database connection or model
+        Any kind of connector / connection / model object.
+    query : str or iterable of str or callable
+        If callable, then it will be used on documents to generate update queries.
+        If `str` or iterable of `str` then this fields will be used
+        to lookup values in update query.
+    processor : callable or None
+        Optional callable to evaluate over all individual records (like map).
+    update : bool
+        Should update or insert mode be used for updating.
+    upsert : bool
+        Should upsert be used in update mode.
+    multiple : bool
+        Should multiple updates be used in update mode.
+    **kwds :
+        Other arguments passed to
+        :py:class:`{{ cookiecutter.repo_name }}.base.interface.DBPersistencInterface`.
+    """
+    _schema = BaseValidator({
+        **DBPersistenceInterface._schema.schema,
+        'model': { 'type': 'mongoengine_model' },
+        'query': { 'type': 'callable', 'coerce': query_factory },
+        'processor': {
+            'type': 'callable',
+            'nullable': True,
+            'default': update_action_hook
+        },
+        'update': { 'type': 'boolean', 'default': True },
+        'upsert': { 'type': 'boolean', 'default': True },
+        'multiple': { 'type': 'boolean', 'default': False }
+    })
 
-        model : a database connection or model
-            Any kind of connector / connection / model object.
-        query : str or iterable of str or callable
-            If callable, then it will be used on documents to generate update queries.
-            If `str` or iterable of `str` then this fields will be used
-            to lookup values in update query.
-        processor : callable or None
-            Optional callable to evaluate over all individual records (like map).
-        update : bool
-            Should update or insert mode be used for updating.
-        upsert : bool
-            Should upsert be used in update mode.
-        multiple : bool
-            Should multiple updates be used in update mode.
-        **kwds :
-            Other arguments passed to
-            :py:class:`{{ cookiecutter.repo_name }}.persistence.cfg.DBPersistencConfig`.
-        """
-        if not callable(query):
-            if isinstance(query, str) or not isinstance(query, Iterable):
-                query = [ query ]
-            query_fields = query
-            def query(dct):
-                return { f: dct.pop(f) for f in query_fields}
-        super().__init__(model=model, query=query, processor=processor, **kwds)
-        self.update = update
-        self.upsert = upsert
-        self.multiple = multiple
+    def __init__(self, **kwds):
+        """Initialization method."""
+        super().__init__(**kwds)
 
 
 class MongoPersistence(DBPersistence):
@@ -94,27 +96,23 @@ class MongoPersistence(DBPersistence):
     --------
     mongoengine
     """
-    def __init__(self, cfg=None, item_name='document', **kwds):
+    def __init__(self, settings=None, item_name='document', **kwds):
         """Initialization method.
 
         Parameters
         ----------
-        cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistenceConfig`
-            Database configuration object.
-            Fields `model`, `query` and `processor` have to be compatible
-            with :py:module:`mongoengine`.
-            If `None` then an instance of `MongoPersistenceConfig`
-            is created and modified with `**kwds`.
+        settings : :py:class:`{{ cookiecutter.repo_name }}.persistence.mongo.MongoPersistenceInterface`
+            MongoDB persistence settings object.
         item_name : str
             Item name
         **kwds :
             Other arguments passed to
-            :py:class:`{{ cookiecutter.repo_name }}.persistence.mongo.MongoPersistenceConfig`
-            when `cfg` is `None`.
+            :py:class:`{{ cookiecutter.repo_name }}.persistence.mongo.MongoPersistenceInteface`
+            when `settings=None`.
         """
-        if not cfg:
-            cfg = MongoPersistenceConfig(**kwds)
-        super().__init__(cfg, item_name)
+        if not settings:
+            settings = MongoPersistenceInterface(**kwds)
+        super().__init__(settings, item_name)
 
     def persist(self, doc, print_num=True, **kwds):
         """Persist documents in MongoDB in batches.
@@ -197,23 +195,21 @@ class MongoPersistence(DBPersistence):
         collection_name : str
             Collection name.
         """
-        if not self.logger:
-            return
         if not self.n_retry or self.n_retry < 0:
             errmsg = f"Failed to update collection '{collection_name}'"
-            self.logger.exception(errmsg, exc_info=exc)
+            self.log(errmsg, method='exception', exc_info=exc)
         else:
             n_retry_left = self.n_retry - n_retry
             if n_retry == 0:
                 errmsg = "Update for collection '{}' failed {} times. Stop retrying.".format(
                     collection_name, self.n_retry
                 )
-                self.logger.exception(errmsg, exc_info=exc)
+                self.log(errmsg, method='exception', exc_info=exc)
             else:
                 errmsg = "Update for collection '{}' failed {} times. Retrying {} times.".format(
                     collection_name, n_retry, n_retry_left
                 )
-                self.logger.exception(errmsg, exc_info=exc)
+                self.log(errmsg, method='exception', exc_info=exc)
 
 
     def do_update(self, min_batch_size=None, update=None, **kwds):
@@ -260,21 +256,6 @@ class MongoPersistence(DBPersistence):
                     self.log_update_error(-1, exc, collection_name)
                     raise exc
                 n_retry = 0
-                self.log_update_error(n_retry, exc, collection_name)
-                while n_retry < self.n_retry:
-                    time.sleep(self.backoff_time*self.backoff_base**n_retry)
-                    n_retry += 1
-                    try:
-                        self.make_bulk_update(**kwds)
-                        break
-                    except Exception as exc:
-                        self.log_update_error(n_retry, exc, collection_name)
-                        if n_retry >= self.n_retry:
-                            raise exc
-        if self.logger:
-            self.logger.info("Updated collection '{}' [{} records in total]".format(
-                self.model._get_collection_name(), self.count
-            ))
 
     def get_model_name(self):
         """Get collection model name."""
