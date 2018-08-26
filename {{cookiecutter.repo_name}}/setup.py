@@ -54,7 +54,9 @@ setup(
         'click>=6.7,<7',
         'mongoengine>=0.15.3,<1',
         'scrapy>=1.5.1,<2',
-        'dateparser>=0.7.0,<1'
+        'scrapy-splash>=0.7.2,<1',
+        'dateparser>=0.7.0,<1',
+        'tldextract>=2.2.0,<3'
     ],
     license='MIT',
     zip_safe=False,

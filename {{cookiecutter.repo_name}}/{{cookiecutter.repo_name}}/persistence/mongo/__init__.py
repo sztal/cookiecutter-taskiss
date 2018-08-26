@@ -275,3 +275,17 @@ class MongoPersistence(DBPersistence):
             self.logger.info("Updated collection '{}' [{} records in total]".format(
                 self.model._get_collection_name(), self.count
             ))
+
+    def get_model_name(self):
+        """Get collection model name."""
+        self.model._get_collection_name()
+
+    def drop_model_data(self, query):
+        """Drop model data.
+
+        Parameters
+        ----------
+        query : dict
+            Dict representing raw MongoDB query.
+        """
+        self.model.objects(__raw__=query).delete()

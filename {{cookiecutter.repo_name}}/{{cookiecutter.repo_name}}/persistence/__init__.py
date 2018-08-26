@@ -33,7 +33,7 @@ class BasePersistence(metaclass=Composable):
     """
     def __init__(self, cfg=None, item_name='item'):
         """Initilization method."""
-        self.setcomponents([ ('_cfg', cfg) ])
+        self.setcomponents_([ ('_cfg', cfg) ])
         self._counter = count(start=1)
         self._count = 0
         self.item_name = item_name
@@ -258,6 +258,18 @@ class DBPersistence(BasePersistence):
         """
         super().__init__(cfg, item_name)
 
+    def get_model_name(self):
+        """Get model name."""
+        raise NotImplementedError("'{}' does not implement 'get_model_name'".format(
+            self.__class__.__name__
+        ))
+
+    def drop_model_data(self, *args, **kwds):
+        """Drop model data."""
+        raise NotImplementedError("'{}' does not implement 'drop_model_data'".format(
+            self.__class__.__name__
+        ))
+
     def __enter__(self):
         """Enter hook."""
         pass
@@ -265,3 +277,7 @@ class DBPersistence(BasePersistence):
     def __exit__(self, type, value, traceback):
         """Exit hook."""
         self.finalize()
+
+    def finalize(self):
+        """Finalize update."""
+        pass

@@ -34,11 +34,7 @@ class DataImporter(AbstractImporter):
         **kwds :
             Other arguments passed to `persist` method.
         """
-        if hasattr(self.persistence, 'finalize'):
-            with self.persistence:
-                for record in data:
-                    self.persistence.persist(record, print_num=print_num, **kwds)
-        else:
+        with self.persistence:
             for record in data:
                 self.persistence.persist(record, print_num=print_num, **kwds)
 
