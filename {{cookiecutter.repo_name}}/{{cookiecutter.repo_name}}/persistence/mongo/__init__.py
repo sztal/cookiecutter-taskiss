@@ -36,16 +36,7 @@ def init(user, password, host, port, db, authentication_db=None, use_envvars=Tru
     authentication_db : str or None
         Authentication databse name.
         Use `db` if `None`.
-    use_envvars : bool
-        If `True`, then arguments are used to lookup
-        values in environmental variables.
     """
-    if use_envvars:
-        user = os.environ[user]
-        password = os.environ[password]
-        host = os.environ[host]
-        port = os.environ[port]
-        db = os.environ[db]
     if not authentication_db:
         authentication_db = db
     uri = MONGO_URI.format(

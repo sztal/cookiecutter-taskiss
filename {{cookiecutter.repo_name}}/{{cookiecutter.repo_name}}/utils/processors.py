@@ -53,8 +53,8 @@ def parse_bool(x):
     if isinstance(x, bool):
         return x
     x = x.lower()
-    if x in ('true', 'yes'):
+    if x in ('true', 'yes', '1', 'on'):
         return True
-    if x in ('false', 'no'):
+    if x in ('false', 'no', '0', 'off'):
         return False
     raise ValueError("Value '{}' can not be interpreted as boolean".format(x))

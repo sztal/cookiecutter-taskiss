@@ -80,6 +80,7 @@ class TestJSONLinesPersistence:
         assert saved_data == data
 
 
+@pytest.mark.db
 class TestDataImporterAndMongoPersistence:
     """Test cases for `DataImporter` and `MongoPersistence`."""
 

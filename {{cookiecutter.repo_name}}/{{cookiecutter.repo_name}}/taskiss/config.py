@@ -4,8 +4,8 @@ from {{ cookiecutter.repo_name }} import cfg as _cfg
 from {{ cookiecutter.repo_name }} import MODE as _mode
 
 # Main URLs
-broker_url = _os.environ[_cfg.get(_mode, 'celery_broker_url')]
-result_backend = _os.environ[_cfg.get(_mode, 'celery_result_backend')]
+broker_url = _cfg.getenvvar(_mode, 'celery_broker_url')
+result_backend = _cfg.getenvvar(_mode, 'celery_result_backend')
 # Included modules
 include = ['{{cookiecutter.repo_name}}.taskiss.{{cookiecutter.taskdir_name}}']
 if _mode.lower() == 'dev':

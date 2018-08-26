@@ -37,13 +37,13 @@ test-quick:
 	py.test
 
 test:
-	py.test --run-tasks
+	py.test --run-tasks --run-db
 
 test-pylint:
 	py.test --pylint -m pylint
 
 test-all:
-	py.test --pylint --run-tasks
+	py.test --pylint --run-tasks --run-db
 
 test-tox:
 	tox

@@ -19,14 +19,13 @@ __version__ = '{{ cookiecutter.version }}'
 
 # Iniitilize application components -------------------------------------------
 
-log.init(os.environ[cfg.get(MODE, 'log_root_dir')])
+log.init(cfg.getenvvar(MODE, 'log_root_dir'))
 mdb = None
-if parse_bool(os.environ.get('DB_USE', True)):
+if cfg.getenvvar('DEV', 'db_use', fallback=True):
     mdb = mongo.init(
-        user=cfg.get(MODE, 'mongo_user'),
-        password=cfg.get(MODE, 'mongo_pass'),
-        host=cfg.get(MODE, 'mongo_host'),
-        port=cfg.get(MODE, 'mongo_port'),
-        db=cfg.get(MODE, 'mongo_db'),
-        use_envvars=True
+        user=cfg.getenvvar(MODE, 'mongo_user'),
+        password=cfg.getenvvar(MODE, 'mongo_pass'),
+        host=cfg.getenvvar(MODE, 'mongo_host'),
+        port=cfg.getenvvar(MODE, 'mongo_port'),
+        db=cfg.getenvvar(MODE, 'mongo_db')
     )

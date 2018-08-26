@@ -9,6 +9,8 @@ Tests can also be run within working
 """
 import os
 import pytest
+from {{ cookiecutter.repo_name }} import MODE
+from {{ cookiecutter.repo_name }}.cfg import cfg
 from {{ cookiecutter.repo_name }}.taskiss.scheduler import Scheduler
 from {{ cookiecutter.repo_name }}.taskiss.config import include
 
@@ -20,6 +22,10 @@ def pytest_addoption(parser):
         '--run-tasks', action='store_true', default=False,
         help="Run task tests."
     )
+    parser.addoption(
+        '--run-db', action='store_true', default=True,
+        help="Run database-dependent tests."
+    )
 
 def pytest_collection_modifyitems(config, items):
     """Modify test runner behavior based on `pytest` settings."""
@@ -30,7 +36,13 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "task" in item.keywords:
                 item.add_marker(skip_tasks)
-
+    if not config.getoption('--run-db') or not cfg.getenvvar(MODE, 'db_use', fallback=True):
+        skip_db_tasks = pytest.mark.skip(
+            reason="nee --run-db and envvar 'DB_USE' enabled to run"
+        )
+        for item in items:
+            if "db" in item.keywords:
+                item.add_marker(skip_db_tasks)
 
 # Fixtures --------------------------------------------------------------------
 
