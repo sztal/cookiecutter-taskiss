@@ -21,7 +21,7 @@ __version__ = '{{ cookiecutter.version }}'
 
 log.init(cfg.getenvvar(MODE, 'log_root_dir'))
 mdb = None
-if cfg.getenvvar('DEV', 'db_use', fallback=True):
+if cfg.getenvvar('DEV', 'db_use', fallback=True, convert_bool=True):
     mdb = mongo.init(
         user=cfg.getenvvar(MODE, 'mongo_user'),
         password=cfg.getenvvar(MODE, 'mongo_pass'),

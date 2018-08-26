@@ -29,14 +29,16 @@ def pytest_addoption(parser):
 
 def pytest_collection_modifyitems(config, items):
     """Modify test runner behavior based on `pytest` settings."""
-    if not config.getoption('--run-tasks'):
+    if not config.getoption('--run-tasks') \
+    or not cfg.getenvvar(MODE, 'celery_use', fallback=True, convert_bool=True):
         skip_tasks = pytest.mark.skip(
             reason="need --run-tasks to run"
         )
         for item in items:
             if "task" in item.keywords:
                 item.add_marker(skip_tasks)
-    if not config.getoption('--run-db') or not cfg.getenvvar(MODE, 'db_use', fallback=True):
+    if not config.getoption('--run-db') \
+    or not cfg.getenvvar(MODE, 'db_use', fallback=True, convert_bool=True):
         skip_db_tasks = pytest.mark.skip(
             reason="nee --run-db and envvar 'DB_USE' enabled to run"
         )

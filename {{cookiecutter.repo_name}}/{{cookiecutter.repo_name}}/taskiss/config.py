@@ -4,8 +4,8 @@ from {{ cookiecutter.repo_name }} import cfg as _cfg
 from {{ cookiecutter.repo_name }} import MODE as _mode
 
 # Main URLs
-broker_url = _cfg.getenvvar(_mode, 'celery_broker_url')
-result_backend = _cfg.getenvvar(_mode, 'celery_result_backend')
+broker_url = _cfg.getenvvar(_mode, 'celery_broker_url', fallback=None)
+result_backend = _cfg.getenvvar(_mode, 'celery_result_backend', fallback=None)
 # Included modules
 include = ['{{cookiecutter.repo_name}}.taskiss.{{cookiecutter.taskdir_name}}']
 if _mode.lower() == 'dev':
@@ -20,6 +20,8 @@ enable_utc = True
 task_track_started = True
 task_ignore_result = True
 task_soft_time_limit = 60*60
+task_alaways_eager = \
+    _cfg.getenvvar(_mode, 'celery_always_eager', convert_bool=True, fallback=False)
 # Task routes
 task_routes = {}
 # Worker settings

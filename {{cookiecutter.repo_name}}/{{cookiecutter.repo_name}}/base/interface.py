@@ -11,6 +11,7 @@ argument / attribute access via standard attribute getter.
 from cerberus import Validator
 from {{ cookiecutter.repo_name }}.base.abc import AbstractInterface
 from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
+from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
 
 
 class BaseInterface(AbstractInterface):
@@ -50,10 +51,8 @@ class BaseInterface(AbstractInterface):
         **kwds
             Settings.
         """
-        # TODO: this is not optimal but is safe in case multi-threading
-        # TODO: as schema is defined on the class level; what to do?
-        arguments = self.schema.normalized(kwds)
-        if self.schema.validate(arguments):
+        arguments = self.schema.validated(kwds)
+        if arguments is not None:
             for k, v in arguments.items():
                 setattr(self, k, v)
         else:
@@ -63,6 +62,8 @@ class BaseInterface(AbstractInterface):
         """Default attribute value lookup."""
         if self._allow_default:
             return self._defaultvalue
+        else:
+            raise AttributeError
 
     @property
     def schema(self):
@@ -97,12 +98,8 @@ class DiskPersistenceInterface(BaseInterface):
         'filename': { 'type': 'string' },
         'dirpath': { 'type': 'string' },
         'batch_size': { 'type': 'integer', 'coerce': int, 'default': 0 },
-        'logger': { 'type': 'logger', 'nullable': True }
+        'logger': { 'type': 'logger', 'nullable': True, 'default': None }
     })
-
-    def __init__(self, **kwds):
-        """Initialization method."""
-        super().__init__(**kwds)
 
 
 class DBPersistenceInterface(BaseInterface):
@@ -137,14 +134,71 @@ class DBPersistenceInterface(BaseInterface):
     _schema = BaseValidator({
         'model': {},
         'query': {},
-        'processor': { 'type': 'callable', 'nullable': True },
+        'processor': { 'type': 'callable', 'nullable': True, 'default': None },
         'batch_size': { 'type': 'integer', 'coerce': int, 'default': 0 },
         'n_retry': { 'type': 'integer', 'coerce': int, 'default': 2 },
         'backoff_time': { 'type': 'integer', 'coerce': int, 'default': 5 },
         'backoff_base': { 'type': 'number', 'default': 2, 'min': 0 },
-        'logger': { 'type': 'logger', 'nullable': True }
+        'logger': { 'type': 'logger', 'nullable': True, 'default': None }
     })
 
-    def __init__(self, **kwds):
-        """Initialization method."""
-        super().__init__(**kwds)
+
+class ScrapyCLIExtraArgsInterface(BaseInterface):
+    """Interface for extra args provided in *Scrapy* CLI.
+
+    :py:module:`{{ cookiecutter.repo_name }}.webscraping` module adds
+    several additional command-line arguments that may be passed to
+    *Scrapy* spiders to modify their behaviour. This interface is used
+    to handle these arguments in an orderly fashion.
+
+    Attributes
+    ----------
+     limit : int or None
+        Limit for number of requests being made.
+    mode : str or None
+        Special mode the spider is run in.
+        Currently only value `debug` is supported and it set a `pdb`
+        breakpoint in the parse method right before the return statement.
+    storage : str or None
+        Type of storage used for data persistence.
+        If `None` then both disk and database storage is used.
+        Value `all` is an alias for `None`.
+        If it is `nodb` the only disk persistence is used.
+        If it is `no` then no persistence is used.
+        Other values raise `ValueError`.
+    overwrite : bool or None
+        If `True` then data for given source is deleted before running the spider.
+    test_url : str or None
+        Single url to fetch and parse. Meant for testing purposes.
+    """
+    _schema = BaseValidator({
+        'limit': {
+            'type': 'integer',
+            'coerce': int,
+            'min': 1,
+            'nullable': True,
+            'default': None
+        },
+        'mode': {
+            'type': 'string',
+            'allowed': [ 'debug' ],
+            'nullable': True,
+        },
+        'storage': {
+            'type': 'string',
+            'allowed': [ 'all', 'nodb', 'no' ],
+            'nullable': True,
+            'default': None
+        },
+        'overwrite': {
+            'type': 'boolean',
+            'coerce': parse_bool,
+            'nullable': True,
+            'default': None
+        },
+        'text_url': {
+            'type': 'string',
+            'nullable': True,
+            'default': None
+        }
+    })

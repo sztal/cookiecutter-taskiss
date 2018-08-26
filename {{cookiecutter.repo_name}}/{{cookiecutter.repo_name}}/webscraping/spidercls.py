@@ -10,6 +10,7 @@ from scrapy_splash import SplashRequest, SplashJsonResponse
 from w3lib.url import canonicalize_url
 from {{ cookiecutter.repo_name }}.cfg import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
+from {{ cookiecutter.repo_name }}.base.interface import ScrapyCLIExtraArgsInterface
 
 
 class BaseSpider(Spider):
@@ -60,9 +61,11 @@ class BaseSpider(Spider):
 
     Notes
     -----
-    Base spider can always define the `limit` attribute.
-    If it is defined, then query for getting request urls is limited
-    to the specified number. It can be useful for testing etc.
+    Spider behaviour may be modified by additional command-line arguments
+    that are described in this docstring and also in
+    :py:class:`{{ cookiecutter.repo_name }}.base.interface.ScrapyCLIExtraArgsInterface`.
+    The arguments are not injected into a spider object directly, but are stored
+    in wrapped object in `spider.args`.
     """
     limit = None
     mode = None
@@ -86,33 +89,15 @@ class BaseSpider(Spider):
 
     # Methods -----------------------------------------------------------------
 
-    def check_extra_attribute(self, attr):
-        """Check extra attribute value."""
-        val = getattr(self, attr)
-        values = getattr(self, '_'+attr+'_values')
-        if val not in values:
-            raise ValueError(
-                "Incorrect '{}' value ['{}']. Should be one of: {}".format(
-                    attr, val, ", ".join(map(str, values))
-                )
-            )
-
-    def set_extra_attributes(self):
-        """Check and assign extra custom spider attributes that need validation."""
-        # Check and assign limit
-        if self.limit is not None:
-            self.limit = int(self.limit)
-        # Check and assign mode
-        if self.mode is not None:
-            self.mode = self.mode.lower()
-            self.check_extra_attribute('mode')
-        # Check and assign storage
-        if self.storage is not None:
-            self.storage = self.storage.lower()
-            self.check_extra_attribute('storage')
-        # Check and assign overwrite
-        if self.overwrite is not None:
-            self.overwrite = parse_bool(self.overwrite)
+    @classmethod
+    def parse_extra_args(cls):
+        """Consume extra args and place them in a wrapper object."""
+        args = {}
+        for key in ScrapyCLIExtraArgsInterface.schema.schema:
+            if hasattr(cls, key):
+                args[key] = getattr(cls, key)
+                delattr(cls, key)
+        cls.args = ScrapyCLIExtraArgsInterface(**args)
 
     def get_urls(self):
         """Get urls and request data from the database.
@@ -130,7 +115,7 @@ class BaseSpider(Spider):
 
     def start_requests(self):
         """Generate start requests."""
-        self.set_extra_attributes()
+        self.parse_extra_args()
         if self.test_url:
             urls = [ (self.test_url, { 'link': self.test_url }) ]
         else:

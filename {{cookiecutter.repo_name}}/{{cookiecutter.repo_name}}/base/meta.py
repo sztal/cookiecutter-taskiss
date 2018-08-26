@@ -39,8 +39,7 @@ def __getattr__(self, attr):
             return getattr(component, attr)
         except AttributeError:
             pass
-    msg = "'{}' object has no attribute '{}'".format(self.__class__.__name__, attr)
-    raise AttributeError(msg)
+    raise AttributeError
 
 def getcomponents_(self, clsname=None):
     """Get components dictionary.
