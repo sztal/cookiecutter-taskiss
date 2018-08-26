@@ -13,65 +13,10 @@ from collections import deque
 from logging import getLogger
 from itertools import count
 from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path, make_path, make_filepath
-from {{ cookiecutter.repo_name }}.persistence.mongo.utils import make_bulk_update, action_hook_set
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.persistence.abc import AbstractPersistenceConfig
 from {{ cookiecutter.repo_name }}.meta import Composable
-
-
-class DiskPersistenceConfig(AbstractPersistenceConfig):
-    """Configuration object for
-    :py:class:`{{ cookiecutter.repo_name }}.persistence.DiskPersistence` objects.
-
-    Attributes
-    ----------
-    filename : str
-        Filename format string.
-        Should have '{n}' in place of persistence file number.
-    dirpath : str
-        Absolute path to the persistence directory.
-    """
-    def __init__(self, filename, dirpath):
-        """Initialization method."""
-        self.filename = filename
-        self.dirpath = dirpath
-
-
-class DBPersistenceConfig(AbstractPersistenceConfig):
-    """Configuration object for
-    :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistence` objects.
-
-    Attributes
-    ----------
-    query : callable or any
-        Some object representing the update query.
-        If callable then it is evaluated on the array of records to update.
-    processor : callable or None
-        Optional callable to evaluate over all individual records (like map).
-    batch_size : int or None
-        Batch size when updating.
-        If negative or *falsy* then no batch limit is used.
-    n_retry : int or None
-        Number of retries after fail.
-        If negative of *falsy* then only one update attempt is made.
-    backoff_time : int or None
-        Number of seconds to wait before trying to update again after a failure.
-        If negative or *falsy*, then no backoff time is used.
-    backoff_exp : numeric
-        Exponent for exponential backoff scaling of wait times between
-        subsequent update attempts (base 2 is used).
-        Set to 0 to use constant backoff time.
-    """
-    def __init__(self, query, processor=None, batch_size=None, n_retry=2,
-                 backoff_time=5, backoff_exp=1):
-        """Initialization method."""
-        self.query = query
-        self.processor = processor
-        self.batch_size = batch_size
-        self.n_retry = n_retry
-        self.backoff_time = backoff_time
-        self.backoff_exp = backoff_exp
+from {{ cookiecutter.repo_name }}.persistence.cfg import DiskPersistenceConfig
 
 
 class BasePersistence(metaclass=Composable):
@@ -86,12 +31,13 @@ class BasePersistence(metaclass=Composable):
     item_name : str
         Name of the items being processed.
     """
-    def __init__(self, cfg, item_name='item'):
+    def __init__(self, cfg=None, item_name='item'):
         """Initilization method."""
         self.setcomponents([ ('_cfg', cfg) ])
         self._counter = count(start=1)
         self._count = 0
         self.item_name = item_name
+        self.queue = deque()
 
     @property
     def count(self):
@@ -132,9 +78,21 @@ class BasePersistence(metaclass=Composable):
         n = next(self._counter)
         self._count = n
         if print_num and n > 1:
-            safe_print(msg.format(tem_name=item_name, n=n, **kwds))
+            safe_print(msg.format(item_name=item_name, n=n, **kwds))
         return n
 
+    def log(self, msg="Processed {n} {item_name}s"):
+        """Log information about work done.
+
+        Parameters
+        ----------
+        msg : str
+            Message to log.
+            Has to be a formattable string with placeholders `n` and `item_name`.
+        """
+        if self.logger and self.batch_size \
+        and self.batch_size > 0 and self.count % self.batch_size == 0:
+            self.logger.info(msg.format(n=self.count, item_name=self.item_name))
 
 # Disk persistence classes ----------------------------------------------------
 
@@ -144,10 +102,10 @@ class DiskPersistence(BasePersistence):
     This is a base class (does not define proper `persist` method)
     used as a core for concrete peristence classes that write to disk.
     """
-    def __init__(self, cfg, item_name='item'):
+    def __init__(self, cfg=None, item_name='item'):
         """Initialization method.
 
-        Attributes
+        Parameters
         ----------
         cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DiskPersistenceConfig`
             Disk persistence config providing the persistence directory path
@@ -200,7 +158,7 @@ class DiskPersistence(BasePersistence):
 class JSONLinesPersistence(DiskPersistence):
     """JSON lines disk persitence component class."""
 
-    def __init__(self, cfg, json_serializer=JSONEncoder, item_name='item'):
+    def __init__(self, cfg=None, json_serializer=JSONEncoder, item_name='item', **kwds):
         """Initialization method.
 
         Parameters
@@ -208,13 +166,21 @@ class JSONLinesPersistence(DiskPersistence):
         cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DiskPersistenceConfig`
             Disk persistence config providing the persistence directory path
             and the filename.
+            If `None` then an instance of `DiskPersistenceConfig`
+            is created from `**kwds`.
         json_serializer : json.JSONEncoder
             :py:class:`json.JSONEncoder` subclass defining JSON serializer.
             Defaults to
             :py:class:`{{ cookiecutter.repo_name }}.utils.serializers.JSONEncoder`.
         item_name : str
             Item name.
+        **kwds :
+            Other arguments passed to
+            :py:class:`{{ cookiecutter.repo_name }}.persistence.cfg.DiskPersistenceConfig`
+            when `cfg` is `None`.
         """
+        if not cfg:
+            cfg = DiskPersistenceConfig(**kwds)
         super().__init__(cfg, item_name)
         self.json_serializer = json_serializer
 
@@ -278,118 +244,24 @@ class JSONLinesPersistence(DiskPersistence):
 # Database persistence classes ------------------------------------------------
 
 class DBPersistence(BasePersistence):
-    """Database persistence base class.
+    """Database persistence base class."""
 
-    Attributes
-    ----------
-    model : a database connection or model
-
-    """
-
-class MongoPersistence(BasePersistence):
-    """MongoDB persistence class.
-
-    Attributes
-    ----------
-    conn : :py:class:`mongoengine.Document`
-        *Mongoengine* collection model class.
-    cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.MongoPersistenceConfig`
-        Configuration object.
-    logger : :py:class:`logging.Logger`
-        Optional logger object.
-    """
-    def __init__(self, coll, cfg, item_name='document', logger=None):
-        """Initialization method."""
-        super().__init__(cfg=cfg, item_name=item_name)
-        self.coll = coll
-        self.logger = logger
-
-    def persist(self, doc=None, print_num=True, log=True, **kwds):
-        """Persist documents in MongoDB in batches.
+    def __init__(self, cfg, item_name='record'):
+        """Initialization method.
 
         Parameters
         ----------
-        doc : dict-like
-            Dict-like object representing a valid MongoDB document.
-        print_num : bool
-            Should number of processed items be printed.
-        **kwds :
-            Parameters passed to `update`.
+        cfg : :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistenceConfig`
+            Database persistence configuration.
+        item_name : str
+            Item name.
         """
-        if doc is not None:
-            self.inc(print_num=print_num)
-            if hasattr(self.coll, 'from_dict'):
-                doc = self.coll.from_dict(doc, only_dict=True)
-            self.documents.appendleft(doc)
-        updated = self.update(**kwds)
-        if updated and log:
-            if print_num:
-                safe_print("")
-            self.logger.info("Updated collection '%s' [%d records in total]",
-                             self.model._get_collection_name(), self.n_processed)
+        super().__init__(cfg, item_name)
 
-    def update(self, query_fields=None, min_batch_size=None,
-               action_hook=None, update=True, drop_first=False, **kwds):
-        """Persist a batch of documents in MongoDB.
+    def __enter__(self):
+        """Enter hook."""
+        pass
 
-        Parameters
-        ----------
-        documents : list-like of dict-like objects
-            A list-like of dict-like object representing a valid MongoDB document.
-            Must provide `pop` method.
-        query_fields : str or iterable of str
-            Field names for update query.
-            If `None` then instance attribute is used.
-        min_batch_size : int
-            Minimal batch size. Instance attribute is used if `None`.
-        action_hook : func or None
-            Function for transforming documents into proper MongoDB update actions.
-            Use `action_hook_set` if `None`.
-        update : bool
-            Should update mode be used instead of insert.
-        drop_first : bool
-            Should collection be reset and dropped before updating
-        **kwds :
-            Parameters passed to `make_bulk_update`.
-
-        Returns
-        -------
-        bool
-            True if successful update has been done.
-        """
-        collname = self.model._get_collection_name()
-        # Optionally drop existing data
-        if drop_first and not self.already_dropped_collection:
-            if self.logger:
-                self.logger.info("Dropping collection '%s'", collname)
-            self.model.drop_collection()
-            self.already_dropped_collection = True
-        # Check if update should be done considering selected batch size
-        if min_batch_size is None:
-            min_batch_size = self.batch_size
-        elif min_batch_size <= 0:
-            min_batch_size = len(self.documents)
-        if len(self.documents) < min_batch_size:
-            return False
-        # Do the update
-        if not query_fields:
-            query_fields = self.query_fields
-        # Perform update
-        if not action_hook:
-            action_hook = self.action_hook
-        docs = [ self.documents.pop() for _ in range(min_batch_size) ]
-        if not update:
-            docs = [ self.model(**d) for d in docs ]
-            self.model.objects.insert(docs)
-        else:
-            if not self.query_fields:
-                errmsg = "Trying to do bulk update with undefined 'query_fields'"
-                raise AttributeError(errmsg)
-            make_bulk_update(
-                data=docs,
-                query_fields=query_fields,
-                model=self.model,
-                **kwds
-            )
-        # Return flag indicating successful update
-        return True
+    def __exit__(self, type, value, traceback):
+        """Exit hook."""
+        self.finalize()

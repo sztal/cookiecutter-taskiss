@@ -12,29 +12,10 @@ class AbstractPersistenceConfig(metaclass=ABCMeta):
     pass
 
 
-class AbstractDBImporter(metaclass=ABCMeta):
-    """Abstract base database importer class."""
+class AbstractImporter(metaclass=ABCMeta):
+    """Abstract data importer base class."""
 
-    @property
     @abstractmethod
-    def connection(self):
-        """Database connection object."""
-        pass
-
-    @property
-    @abstractmethod
-    def cfg(self):
-        """Importet configuration."""
-        pass
-
-    @property
-    @abstractmethod
-    def logger(self):
-        """Logger object."""
-        pass
-
-    @property
-    @abstractmethod
-    def persistence(self):
-        """Persistence object(s)."""
+    def import_data(self):
+        """Import data method."""
         pass

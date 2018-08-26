@@ -2,6 +2,7 @@
 
 This module defines additional top-level exports, main package metadata etc.
 """
+# pylint: disable=C0103
 import os
 from configparser import ConfigParser, ExtendedInterpolation
 from {{ cookiecutter.repo_name }}.cfg import cfg, MODE

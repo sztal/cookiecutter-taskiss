@@ -1,4 +1,4 @@
-"""Test cases for :py:mod:`{{ cookiecutter.repo_name }}.meta`."""
+"""Test cases for :py:module:`{{ cookiecutter.repo_name }}.meta`."""
 import re
 from {{ cookiecutter.repo_name }}.meta import Composable
 
