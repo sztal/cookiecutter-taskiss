@@ -152,17 +152,24 @@ class Scheduler(object):
         if check_cycles and self.circular_dependencies():
             raise CircularDependenciesError(self.dependency_graph)
 
-    def show_dependency_graph(self, with_labels=True, **kwds):
+    def show_dependency_graph(self, task=None, with_labels=True, **kwds):
         """Show dependency graph.
 
         Parameters
         ----------
+        task : str
+            Optional task name.
+            If specified then only a subgraph starting from the task
+            considered as the root node is showed.
         with_labels : bool
             Should labels be shown on the graph.
         **kwds :
             Other params passed to :py:function:`networkx.draw`.
         """
-        draw_shell(self.dependency_graph, with_labels=with_labels, **kwds)
+        graph = self.dependency_graph
+        if task:
+            graph = graph.subgraph([ task, *descendants(graph, task)])
+        draw_shell(graph, with_labels=with_labels, **kwds)
         pyplot.show()
 
     def get_ordered_descendants(self, task):
