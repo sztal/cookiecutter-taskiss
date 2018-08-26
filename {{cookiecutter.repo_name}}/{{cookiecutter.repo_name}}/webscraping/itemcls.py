@@ -2,7 +2,7 @@
 from scrapy.loader import ItemLoader
 from scrapy.loader.processors import TakeFirst, MapCompose
 from {{ cookiecutter.repo_name }}.webscraping.utils import normalize_web_content
-from {{ cookiecutter.repo_name }}.textprocessing import strip
+from {{ cookiecutter.repo_name }}.utils.string import strip
 
 class BaseItemLoader(ItemLoader):
     """Base item loader class.
