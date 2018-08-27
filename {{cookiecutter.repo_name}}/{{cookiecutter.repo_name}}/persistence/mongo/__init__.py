@@ -60,18 +60,19 @@ def init(user, password, host, port, db, authentication_db=None,
     )
     mdb = connect(uri, authentication_db)
     if handle_double_auth_error:
-        try:
-            mdb.database_names()
-        except OperationFailure as exc:
-            rx = re.compile(
-                r"Another user is already authenticated to this database",
-                re.IGNORECASE
-            )
-            if rx.search(str(exc)):
-                mdb.get_database().logout()
-                mdb = connect(uri, authentication_db)
-        else:
-            raise exc
+        pass
+        # try:
+        #     mdb.database_names()
+        # except OperationFailure as exc:
+        #     rx = re.compile(
+        #         r"Another user is already authenticated to this database",
+        #         re.IGNORECASE
+        #     )
+        #     if rx.search(str(exc)):
+        #         mdb.get_database().logout()
+        #         mdb = connect(uri, authentication_db)
+        # else:
+        #     raise exc
     return mdb
 
 

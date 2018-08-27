@@ -1,14 +1,10 @@
 """Utility functions for CLI database module."""
-from {{ cookiecutter.repo_name }}.utils import iter_objects
+from {{ cookiecutter.repo_name }}.utils.app import iter_db_connectors
 from {{ cookiecutter.repo_name }}.cli.utils import pprint
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector
 
 
 def show_db_connectors():
     """Get registered database connectors."""
-    obj = iter_objects(
-        path='.taskiss',
-        obj_predicate=lambda x: isinstance(x, AbstractDBConnector),
-    )
-    for o in obj:
-        pprint(o)
+    for conn in iter_db_connectors():
+        pprint(conn)

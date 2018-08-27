@@ -4,6 +4,8 @@ This module defines additional top-level exports, main package metadata etc.
 """
 # pylint: disable=C0103
 import os
+import atexit
+from logging import getLogger
 from configparser import ConfigParser, ExtendedInterpolation
 from pymongo import MongoClient
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
@@ -25,6 +27,7 @@ AbstractDBConnector.register(MongoClient)
 # Iniitilize application components -------------------------------------------
 
 log.init(cfg.getenvvar(MODE, 'log_root_dir'))
+logger = getLogger('message')
 mdb = None
 if cfg.getenvvar('DEV', 'db_use', fallback=True, convert_bool=True):
     mdb = mongo.init(
@@ -34,3 +37,18 @@ if cfg.getenvvar('DEV', 'db_use', fallback=True, convert_bool=True):
         port=cfg.getenvvar(MODE, 'mongo_port'),
         db=cfg.getenvvar(MODE, 'mongo_db')
     )
+
+# Exit hanlders ---------------------------------------------------------------
+
+def exit_handler():
+    """Exit handler that handles db logout etc."""
+    db = cfg.getenvvar(MODE, 'mongo_db')
+    user = cfg.getenvvar(MODE, 'mongo_user')
+    mdb[db].logout()
+    logger.info(f"Log out user '{user}' from database '{db}'")
+    mdb.close()
+    logger.info(f"MongoDB connection closed [{mdb.name}]")
+
+atexit.register(exit_handler)
+
+# -----------------------------------------------------------------------------

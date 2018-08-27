@@ -13,8 +13,6 @@ def tasks():
     """
     pass
 
-# @click.option('--graph', is_flag=True, default=False, expose_value=False, is_eager=True,
-#               callback=eager_callback(lambda: ts.scheduler.show_dependency_graph()))
 @tasks.command(name='stats', help="Show Celery stats.")
 def _(): to_console(ts.scheduler.inspector.stats())
 

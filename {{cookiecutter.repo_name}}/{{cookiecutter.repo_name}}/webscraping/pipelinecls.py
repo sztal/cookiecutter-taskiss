@@ -1,7 +1,7 @@
 """Item pipeline base and component classes."""
 # pylint: disable=E1101,W0613
 import json
-from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path
+from {{ cookiecutter.repo_name }}.utils.app import get_persistence_path
 from {{ cookiecutter.repo_name }}.base.meta import Composable
 
 

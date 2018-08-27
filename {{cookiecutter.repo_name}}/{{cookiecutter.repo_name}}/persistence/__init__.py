@@ -12,7 +12,8 @@ import json
 from collections import deque
 from logging import getLogger
 from itertools import count
-from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path, make_path, make_filepath
+from {{ cookiecutter.repo_name }}.utils.app import get_persistence_path
+from {{ cookiecutter.repo_name }}.utils.path import make_path, make_filepath
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
 from {{ cookiecutter.repo_name }}.utils import safe_print
 from {{ cookiecutter.repo_name }}.base.meta import Composable
