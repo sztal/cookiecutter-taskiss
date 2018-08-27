@@ -4,8 +4,8 @@ from {{ cookiecutter.repo_name }}.taskiss.{{ cookiecutter.taskmodule_name }} imp
 
 
 @pytest.mark.task
-def test_execute_task(scheduler):
-    res = scheduler.execute_task(cfg, cfg={
+def test_run_task(scheduler):
+    res = scheduler.run_task(cfg, cfg={
         't1': 10,
         't2': 20,
         't3': ['a', 'b', 'c']

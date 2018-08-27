@@ -222,20 +222,11 @@ class Scheduler(object):
         ]
         return dependent_tasks
 
-    def execute_task(self, task, timeout=5, propagate=False, wait=5, **kwds):
-        """Execute task.
+    def run_task(self, task, timeout=5, propagate=False, wait=5, **kwds):
+        """Run task.
 
-        This function executes a Celery task and optionally
+        This function runs a Celery task and optionally
         propagates execution down to all tasks below on the dependency graph.
-
-        Notes
-        -----
-        For now there is no way to ascertain proper task execution order
-        in case of multiple, nonlinear dependency chains,
-        so task, especially tasks with dependencies, should run
-        with no arguments.
-
-        This may change in the future.
 
         Parameters
         ----------

@@ -14,14 +14,14 @@ def make_signature(task, *args):
         return task.si(*args)
     return task.s(*args)
 
-def merge_results(*args, raise_when_ambiguous_args=True):
+def merge_results(*args, raise_ambiguous_args=True):
     """Merge result dicts.
 
     Parameters
     ----------
     *args :
         Sequence of dict-like datasets.
-    raise_when_ambiguous_args : bool
+    raise_ambiguous_args : bool
         Should error be raised with ambiguous arguments are passed.
         If `False` then ambiguous args are overwritten.
     """
@@ -34,9 +34,10 @@ def merge_results(*args, raise_when_ambiguous_args=True):
             continue
         if '_args' in obj:
             _args = [ *_args, *obj['_args'] ]
-        for key in obj:
-            if key in results and results[key] != obj[key]:
-                ambiguous[key].append(results[key], obj[key])
+        if raise_ambiguous_args:
+            for key in obj:
+                if key in results and results[key] != obj[key]:
+                    ambiguous[key].append(results[key], obj[key])
         try:
             results = { **results, **obj }
         except (TypeError, AttributeError, ValueError):

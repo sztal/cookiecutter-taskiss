@@ -26,7 +26,9 @@ cfg_schema = {
     }
 }
 
-@taskiss.task(ignore_result=False, _interface=cfg_schema)
+@taskiss.task(ignore_result=False, _interface={
+    'cfg': { 'type': 'dict' }
+})
 def cfg(cfg):
     return { 'cfg': cfg }
 
@@ -73,3 +75,15 @@ def t6(path, n):
 })
 def t7(path):
     return path
+
+@taskiss.task(ignore_result=False, _interface={
+    'x': { 'type': 'integer', 'min': 0 }
+})
+def long_task(x):
+    time.sleep(x)
+    return True
+
+@taskiss.task(_interface={})
+def very_long_task():
+    time.sleep(60*60)
+    return True

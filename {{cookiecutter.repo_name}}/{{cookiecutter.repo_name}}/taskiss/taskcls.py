@@ -47,7 +47,7 @@ class TaskissTask(Task):
         task_name_kwds = kwds.pop(self.name, {})
         kwds = { **kwds, **task_name_kwds }
         call_kwds = self.interface.validated(kwds)
-        if not call_kwds:
+        if call_kwds is None:
             raise BadTaskArgumentsError(self.interface.errors)
         res = super().__call__(**call_kwds)
         kwds = { k: v for k, v in kwds.items() if k not in call_kwds }
@@ -60,7 +60,7 @@ class TaskissTask(Task):
     @property
     def interface(self):
         """Interface getter."""
-        if not self._interface:
+        if self._interface is None:
             cn = self.__class__.__name__
             raise AttributeError(f"'{cn}' does not define interface")
         elif isinstance(self._interface, Mapping):

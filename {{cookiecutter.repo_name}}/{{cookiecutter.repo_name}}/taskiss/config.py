@@ -16,10 +16,9 @@ timezone = 'Europe/Warsaw'
 enable_utc = True
 # Task settings
 task_track_started = True
-task_ignore_result = True
+task_ignore_result = False
 task_soft_time_limit = 60*60
-task_alaways_eager = \
-    _cfg.getenvvar(_mode, 'celery_always_eager', convert_bool=True, fallback=False)
+task_alaways_eager = _cfg.getboolean(_mode, 'celery_always_eager', fallback=False)
 # Task routes
 task_routes = {}
 # Worker settings

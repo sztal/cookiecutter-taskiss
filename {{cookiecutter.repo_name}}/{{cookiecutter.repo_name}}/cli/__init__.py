@@ -81,3 +81,25 @@ def _(task, labels):
     """
     task = ts.scheduler.resolve_task_name(task)
     ts.scheduler.show_dependency_graph(task, with_labels=labels)
+
+@tasks.command(name='run', help="Run a task.")
+@click.argument('task', nargs=1, type=str, required=True)
+@click.option('--recursive/--not-recursive', '-r', default=False,
+              help="Should task execution propagate recursively to dependent tasks.")
+@click.option('--timeout', '-t', type=int, default=5,
+              help="Timeout value when getting async results once a task finished.")
+@click.option('--wait', '-w', type=int, default=5,
+              help="Number of seconds to wait after each run of the event loop.")
+@click.option('--arg', '-a', type=str, multiple=True,
+              help="Args passed to the task (i.e. -a x=10).")
+def _(task, recursive, timeout, wait, arg):
+    """Run task."""
+    task = ts.scheduler.resolve_task_name(task)
+    queue = ts.scheduler.run_task(
+        task=task,
+        timeout=timeout,
+        propagate=recursive,
+        wait=wait
+    )
+    root_task = next(queue)
+    to_console(root_task.task_id)
