@@ -2,8 +2,10 @@
 # pylint: disable=W0613
 import json
 from collections import Iterable, Mapping
+from ast import literal_eval
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import safe_print
+from {{ cookiecutter.repo_name }}.cli.exceptions import MalformedArgumentError
 
 
 def pprint(obj, indent=None):
@@ -61,3 +63,29 @@ def to_console(obj):
         obj = [obj]
     for o in obj:
         pprint(o)
+
+def parse_args(*args, eval_args=False):
+    """Parse command-line arguments.
+
+    Parameters
+    ----------
+    *args :
+        Sequence of arguments provided as string of form 'key=value'.
+    eval_args : bool
+        If `eval_args=True` then value are first evaluated as literal python
+        code using safe evaluation implemented in
+        :py:function:`ast.literal_eval`.
+    """
+    kwds = {}
+    for arg in args:
+        try:
+            key, value = arg.split("=")
+        except ValueError:
+            raise MalformedArgumentError(arg)
+        if eval_args:
+            try:
+                value = literal_eval(value)
+            except (ValueError, TypeError):
+                raise MalformedArgumentError(arg)
+        kwds[key] = value
+    return kwds

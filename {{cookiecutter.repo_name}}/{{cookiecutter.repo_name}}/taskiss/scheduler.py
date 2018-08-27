@@ -103,20 +103,21 @@ class Scheduler(object):
             raise AmbiguousTaskNameError(task, candidates)
         raise TaskNotRegisteredError(task)
 
-    def get_task(self, task_name):
+    def get_task(self, task):
         """Get task by name.
 
         Parameters
         ----------
-        task_name : str
+        task : str
             Valid task name with full python module path.
         """
+        task = self.resolve_task_name(task)
         try:
-            task = import_module(task_name)
+            task = import_module(task)
         except ModuleNotFoundError:
-            task_name = task_name.split('.')
-            tail = '.'.join(task_name[:-1])
-            head = task_name[-1]
+            task = task.split('.')
+            tail = '.'.join(task[:-1])
+            head = task[-1]
             task = getattr(import_module(tail), head)
         return task
 
@@ -219,6 +220,7 @@ class Scheduler(object):
         """
         graph = self.dependency_graph
         if task:
+            task = self.resolve_task_name(task)
             graph = graph.subgraph([ task, *descendants(graph, task)])
         draw_shell(graph, with_labels=with_labels, **kwds)
         pyplot.show()
@@ -231,6 +233,7 @@ class Scheduler(object):
         task : str
             Task name.
         """
+        task = self.resolve_task_name(task)
         toposort = topological_sort(self.dependency_graph)
         dependent_tasks = [
             t for t in toposort

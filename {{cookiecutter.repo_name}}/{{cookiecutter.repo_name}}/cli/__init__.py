@@ -12,7 +12,7 @@ from celery.result import AsyncResult
 import {{ cookiecutter.repo_name }}
 from {{ cookiecutter.repo_name }}.taskiss import taskiss as ts
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.cli.utils import eager_callback, to_console
+from {{ cookiecutter.repo_name }}.cli.utils import eager_callback, to_console, parse_args
 
 PACKAGE_NAME = {{ cookiecutter.repo_name }}.__name__
 CONTEXT_SETTINGS = {}
@@ -91,7 +91,6 @@ def _(task, labels):
     depends on the first. This means that in some cases it should be
     automatically run after its dependencies are executed.
     """
-    task = ts.scheduler.resolve_task_name(task)
     ts.scheduler.show_dependency_graph(task, with_labels=labels)
 
 @tasks.command(name='run', help="Run a task.")
@@ -104,14 +103,33 @@ def _(task, labels):
               help="Number of seconds to wait after each run of the event loop.")
 @click.option('--arg', '-a', type=str, multiple=True,
               help="Args passed to the task (i.e. -a x=10).")
-def _(task, recursive, timeout, wait, arg):
+@click.option('--evalarg', '-e', type=str, multiple=True,
+              help="Literal evaluated args passed to the task (i.e. -e x=['a'])")
+@click.option('--get', '-g', type=int, required=False,
+              help="Wait for given time to evaluate async results of the root task.")
+def _(task, recursive, timeout, wait, arg, evalarg, get):
     """Run task."""
-    task = ts.scheduler.resolve_task_name(task)
+    kwds = { **parse_args(*arg), **parse_args(*evalarg, eval_args=True)}
     queue = ts.scheduler.run_task(
         task=task,
         timeout=timeout,
         propagate=recursive,
-        wait=wait
+        wait=wait,
+        **kwds
     )
     root_task = next(queue)
     to_console(root_task.task_id)
+    if get is not None:
+        to_console(root_task.get(get))
+    if recursive:
+        for task in queue:
+            to_console(task.task_id)
+            if get is not None:
+                to_console(task.get(get))
+
+@tasks.command(name='schema', help="Show task schema.")
+@click.argument('task', nargs=1, type=str, required=True)
+def _(task):
+    """Show task schema that specifies its arguments."""
+    task = ts.scheduler.get_task(task)
+    to_console(task.interface.schema.schema)

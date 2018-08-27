@@ -19,8 +19,8 @@ cfg_schema = {
     'cfg': {
         'type': 'dict',
         'schema': {
-            't1': { 'type': 'number' },
-            't2': { 'type': 'number' },
+            't1': { 'type': 'number', 'coerce': int },
+            't2': { 'type': 'number', 'coerce': int },
             't3': { 'type': 'list', 'schema': { 'type': 'string'} }
         }
     }
@@ -56,15 +56,15 @@ def t4(strings):
     return { 'path': " => ".join(strings) }
 
 @taskiss.task(dependson=[__name__+'.t1', __name__+'.t2'], ignore_result=False, _interface={
-    'x': { 'type': 'number' },
-    'y': { 'type': 'number' }
+    'x': { 'type': 'number', 'coerce': int },
+    'y': { 'type': 'number', 'coerce': int }
 })
 def t5(x, y):
     return { 'n': x * y }
 
 @taskiss.task(dependson=[__name__+'.t5', __name__+'.t4'], ignore_result=False, _interface={
     'path': { 'type': 'string' },
-    'n': { 'type': 'number' }
+    'n': { 'type': 'number', 'coerce': int }
 })
 def t6(path, n):
     time.sleep(1)
@@ -77,7 +77,7 @@ def t7(path):
     return path
 
 @taskiss.task(ignore_result=False, _interface={
-    'x': { 'type': 'integer', 'min': 0 }
+    'x': { 'type': 'integer', 'min': 0, 'coerce': int }
 })
 def long_task(x):
     time.sleep(x)
