@@ -104,4 +104,4 @@ def _(task, recursive, timeout, wait, arg, evalarg, get):
 def _(task):
     """Show task schema that specifies its arguments."""
     task = ts.scheduler.get_task(task)
-    to_console(task.interface.schema.schema)
+    to_console(task.interface.schema)

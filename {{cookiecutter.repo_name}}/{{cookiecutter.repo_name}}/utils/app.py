@@ -1,5 +1,5 @@
 """Application specific utilities."""
-from {{ cookiecutter.repo_name }}.utils import iter_objects
+from {{ cookiecutter.repo_name }}.utils import iter_objects, is_python_path, import_python
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractDBModel
 from {{ cookiecutter.repo_name }}.persistence.db import BaseDBModelMixin
 from {{ cookiecutter.repo_name }}.config import cfg, MODE, ROOT_PATH
@@ -78,3 +78,24 @@ def iter_db_models(predicate=None):
         if predicate and not predicate(model):
             continue
         yield model
+
+def get_db_model(path_or_name, package=None, **kwds):
+    """Get a database model object by python path or name.
+
+    Parameters
+    ----------
+    path_or_name : str
+        Proper python path or class name.
+    package : str or None
+        Passed to
+        :py:function:`{{ cookiecutter.repo_name }}.utils.import_python`.
+    **kwds :
+        Keyword arguments passed to
+        :py:function:`{{ cookiecutter.repo_name }}.utils.app.iter_db_models`.
+    """
+    if (path_or_name.count('.') >= 1 or path_or_name.count(':') == 1) \
+    and is_python_path(path_or_name):
+        return import_python(path_or_name)
+    for model in iter_db_models(**kwds):
+        if model.__name__ == path_or_name:
+            return model

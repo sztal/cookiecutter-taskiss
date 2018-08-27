@@ -4,18 +4,20 @@ from datetime import datetime, date
 from json import JSONEncoder as _JSONEncoder
 from json import JSONDecoder as _JSONDecoder
 from scrapy import Item
+from cerberus.schema import DefinitionSchema
 
 
 class JSONEncoder(_JSONEncoder):
     """JSON serializer handling :py:class:`datetime.datetime` objects.
 
-    It also serializes :py:class:`scrapy.Item` instances.
+    It also serializes :py:class:`scrapy.Item` and
+    :py:class:`cerberus.schema.DefinitionSchema` instances.
     """
     def default(self, o):
         """Serializer method."""
         if isinstance(o, (date, datetime)):
             return o.isoformat()
-        if isinstance(o, Item):
+        if isinstance(o, (Item, DefinitionSchema)):
             return dict(o)
         return super().default(o)
 
