@@ -8,7 +8,7 @@ facilities. They are meant to be composed of
 import json
 
 
-class DataImporter:
+class BaseDataImporter:
     """Data importer base class."""
 
     def __init__(self, persistence):
@@ -39,7 +39,7 @@ class DataImporter:
                 self.persistence.persist(record, print_num=print_num, **kwds)
 
 
-class JSONLinesImporter(DataImporter):
+class JSONLinesImporter(BaseDataImporter):
     """JSON lines data importer."""
 
     def read_data(self, src):

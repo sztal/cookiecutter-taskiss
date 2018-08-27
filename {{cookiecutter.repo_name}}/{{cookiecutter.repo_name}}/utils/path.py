@@ -39,7 +39,7 @@ def get_rawdata_path(*args, **kwds):
     **kwds :
         Arguments passed to `get_data_path`.
     """
-    return get_data_path('path_rawdata', *args, **kwds)
+    return get_data_path('path_data_rawdata', *args, **kwds)
 
 def get_persistence_path(*args, **kwds):
     """Get data persistence project directory path.
@@ -51,7 +51,7 @@ def get_persistence_path(*args, **kwds):
     **kwds :
         Arguments passed to `get_data_path`.
     """
-    return get_data_path('path_persistence', *args, **kwds)
+    return get_data_path('path_data_persistence', *args, **kwds)
 
 # -----------------------------------------------------------------------------
 
