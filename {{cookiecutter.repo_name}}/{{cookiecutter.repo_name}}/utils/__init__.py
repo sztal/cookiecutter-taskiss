@@ -81,8 +81,9 @@ def iter_objects(path='.', mod_predicate=None, obj_predicate=None, skip_private=
             continue
         path_parts = name.split('.')
         for p in path_parts:
-            if (skip_private and p.startswith('_')) \
-            or (skip_modules and p in skip_modules):
+            if skip_private and p.startswith('_'):
+                continue
+            if skip_modules and p in skip_modules:
                 continue
         if mod_predicate and not mod_predicate(name):
             continue

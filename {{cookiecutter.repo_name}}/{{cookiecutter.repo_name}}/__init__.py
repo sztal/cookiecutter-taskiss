@@ -5,17 +5,22 @@ This module defines additional top-level exports, main package metadata etc.
 # pylint: disable=C0103
 import os
 from configparser import ConfigParser, ExtendedInterpolation
+from pymongo import MongoClient
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import log
 from {{ cookiecutter.repo_name }}.utils.path import make_path
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
 from {{ cookiecutter.repo_name }}.persistence import mongo
+from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector
 
 
 __author__ = '{{ cookiecutter.full_name }}'
 __email__ = '{{ cookiecutter.email }}'
 __version__ = '{{ cookiecutter.version }}'
 
+# Register abstract base classes ----------------------------------------------
+
+AbstractDBConnector.register(MongoClient)
 
 # Iniitilize application components -------------------------------------------
 

@@ -3,7 +3,7 @@ import click
 from celery.result import AsyncResult
 from {{ cookiecutter.repo_name }}.taskiss import taskiss as ts
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.cli.utils import eager_callback, to_console, parse_args
+from {{ cookiecutter.repo_name }}.cli.utils import to_console, parse_args
 
 
 @click.group()

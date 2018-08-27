@@ -19,7 +19,8 @@ from {{ cookiecutter.repo_name }}.persistence.mongo.interface import MongoPersis
 from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
 
 
-def init(user, password, host, port, db, authentication_db=None, use_envvars=True):
+def init(user, password, host, port, db, authentication_db=None,
+         use_envvars=True, handle_double_auth_error=False):
     """Initilize Mongoengine ODM.
 
     Parameters
@@ -37,6 +38,12 @@ def init(user, password, host, port, db, authentication_db=None, use_envvars=Tru
     authentication_db : str or None
         Authentication databse name.
         Use `db` if `None`.
+    handle_double_auth_error : bool
+        Should double authentication error be handled.
+        Sometimes same user is not logged out properly from previous session
+        and thus disables any further operations.
+        The hacky way to deal with it is just to force log out when
+        an operational error of this kind happends and then log again.
     """
     def connect(uri, authentication_source):
         """Connect to MongoDB."""
@@ -52,16 +59,19 @@ def init(user, password, host, port, db, authentication_db=None, use_envvars=Tru
         db=db
     )
     mdb = connect(uri, authentication_db)
-    try:
-        mdb.database_names()
-    except OperationFailure as exc:
-        rx = re.compile(
-            r"Another user is already authenticated to this database",
-            re.IGNORECASE
-        )
-        if rx.search(str(exc)):
-            mdb.get_database().logout()
-            mdb = connect(uri, authentication_db)
+    if handle_double_auth_error:
+        try:
+            mdb.database_names()
+        except OperationFailure as exc:
+            rx = re.compile(
+                r"Another user is already authenticated to this database",
+                re.IGNORECASE
+            )
+            if rx.search(str(exc)):
+                mdb.get_database().logout()
+                mdb = connect(uri, authentication_db)
+        else:
+            raise exc
     return mdb
 
 
