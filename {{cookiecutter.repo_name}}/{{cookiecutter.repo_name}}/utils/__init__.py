@@ -60,7 +60,7 @@ def is_python_path(path):
 
 def iter_objects(path='.', mod_predicate=None, obj_predicate=None, skip_private=True,
                  skip_modules=('test', 'tests', 'doc', 'docs')):
-    """Import all objects with optional predicate based filtering.
+    """Iter over all objects with optional predicate based filtering.
 
     Parameters
     ----------
@@ -91,3 +91,19 @@ def iter_objects(path='.', mod_predicate=None, obj_predicate=None, skip_private=
         for _, obj in module.__dict__.items():
             if obj_predicate and obj_predicate(obj):
                 yield obj
+
+def iter_classes(path='.', obj_predicate=None, **kwds):
+    """Iter over all class objects with optional predicate based filtering.
+
+    Uses the same parameters as
+    :py:function:`{{ cookiecutter.repo_name }}.utils.iter_objects`.
+    """
+    def wrapped_obj_predicate(obj):
+        """Wrapped object predicate function."""
+        if not isinstance(obj, type):
+            return False
+        try:
+            return obj_predicate(obj)
+        except TypeError:
+            return False
+    yield from iter_objects(path, obj_predicate=wrapped_obj_predicate, **kwds)

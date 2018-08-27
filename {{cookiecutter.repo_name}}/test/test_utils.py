@@ -4,7 +4,7 @@ import {{ cookiecutter.repo_name }}
 import {{ cookiecutter.repo_name }}.taskiss
 import {{ cookiecutter.repo_name }}.config as cfg
 import {{ cookiecutter.repo_name }}.utils.path as path
-from {{ cookiecutter.repo_name }}.persistence.importers import BaseDataImporter
+from {{ cookiecutter.repo_name }}.persistence.importers import BaseDBImporter
 from {{ cookiecutter.repo_name }}.utils import import_python, iter_objects
 from {{ cookiecutter.repo_name }}.base.abc import AbstractInterface
 
@@ -24,7 +24,7 @@ def test_import_python(path, package, exp):
     assert res == exp
 
 
-obj_predicate1 = lambda x: isinstance(x, type) and issubclass(x, BaseDataImporter)
+obj_predicate1 = lambda x: isinstance(x, type) and issubclass(x, BaseDBImporter)
 obj_predicate2 = lambda x: isinstance(x, type) and issubclass(x, AbstractInterface)
 
 @pytest.mark.parametrize('path,mod_predicate,obj_predicate', [

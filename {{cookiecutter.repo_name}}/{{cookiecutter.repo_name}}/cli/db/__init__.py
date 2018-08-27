@@ -1,6 +1,7 @@
 """CLI: database management module."""
 import click
 from {{ cookiecutter.repo_name }}.cli.db.mongo import mongo
+from {{ cookiecutter.repo_name }}.cli.db.dataimport import dataimport
 from {{ cookiecutter.repo_name }}.cli.utils import eager_callback
 from {{ cookiecutter.repo_name }}.cli.db.utils import show_db_connectors, show_db_models
 
@@ -16,3 +17,4 @@ def db():
 
 
 db.add_command(mongo)
+db.add_command(dataimport)

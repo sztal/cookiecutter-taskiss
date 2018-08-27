@@ -8,7 +8,7 @@ from mongoengine import Document
 from mongoengine import ObjectIdField, StringField, IntField, ListField, DateTimeField
 from {{ cookiecutter.repo_name }}.persistence import JSONLinesPersistence
 from {{ cookiecutter.repo_name }}.persistence.db.mongo import MongoPersistence
-from {{ cookiecutter.repo_name }}.persistence.importers import BaseDataImporter
+from {{ cookiecutter.repo_name }}.persistence.importers import BaseDBImporter
 from {{ cookiecutter.repo_name }}.persistence.db.mongo.mixins import BaseDocumentMixin
 
 
@@ -54,8 +54,8 @@ def mongo_model_data():
 
 @pytest.fixture(scope='module')
 def importer(MongoModel):
-    """Fixture: JSONLinesImporter."""
-    importer = BaseDataImporter(MongoPersistence(
+    """Fixture: JSONLinesDBImporter."""
+    importer = BaseDBImporter(MongoPersistence(
         model=MongoModel,
         query='title',
         batch_size=440,
@@ -81,8 +81,8 @@ class TestJSONLinesPersistence:
 
 
 @pytest.mark.db
-class TestBaseDataImporterAndMongoPersistence:
-    """Test cases for `BaseDataImporter` and `MongoPersistence`."""
+class TestBaseDBImporterAndMongoPersistence:
+    """Test cases for `BaseDBImporter` and `MongoPersistence`."""
 
     def test_import_and_persist(self, importer, mongo_model_data):
         """Test case for data import and persistence."""

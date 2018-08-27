@@ -25,3 +25,7 @@ class AbstractDBModel(metaclass=ABCMeta):
 class AbstractMongoModel(AbstractDBModel):
     """Abstract base class for registering MongoDB model classes."""
     pass
+
+class AbstractDBImporter(metaclass=ABCMeta):
+    """Abstract base class for registering db importers classes."""
+    pass

@@ -1,7 +1,10 @@
 """Application specific utilities."""
-from {{ cookiecutter.repo_name }}.utils import iter_objects, is_python_path, import_python
+from {{ cookiecutter.repo_name }}.utils import iter_objects, iter_classes
+from {{ cookiecutter.repo_name }}.utils import is_python_path, import_python
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractDBModel
+from {{ cookiecutter.repo_name }}.base.abc import AbstractDBImporter
 from {{ cookiecutter.repo_name }}.persistence.db import BaseDBModelMixin
+from {{ cookiecutter.repo_name }}.persistence.importers import BaseDBImporter
 from {{ cookiecutter.repo_name }}.config import cfg, MODE, ROOT_PATH
 
 
@@ -62,22 +65,10 @@ def iter_db_connectors(predicate=None):
 
 def iter_db_models(predicate=None):
     """Iter over available db models."""
-    def obj_predicate(x):
-        """Class object predicate."""
-        if not isinstance(x, type):
-            return False
-        try:
-            return issubclass(x, AbstractDBModel) \
-            and issubclass(x, BaseDBModelMixin)
-        except TypeError:
-            return False
-
-    models = \
-        iter_objects('.{{ cookiecutter.repo_name }}', obj_predicate=obj_predicate)
-    for model in models:
-        if predicate and not predicate(model):
-            continue
-        yield model
+    obj_predicate = lambda o: \
+        issubclass(o, AbstractDBModel) and issubclass(o, BaseDBModelMixin) \
+        and (predicate(o) if predicate else True)
+    yield from iter_classes('.{{ cookiecutter.repo_name }}', obj_predicate=obj_predicate)
 
 def get_db_model(path_or_name, package=None, **kwds):
     """Get a database model object by python path or name.
@@ -99,3 +90,11 @@ def get_db_model(path_or_name, package=None, **kwds):
     for model in iter_db_models(**kwds):
         if model.__name__ == path_or_name:
             return model
+
+def iter_db_importers(predicate=None):
+    """Iter over available db importers."""
+    obj_predicate = lambda o: \
+        issubclass(o, AbstractDBImporter) and issubclass(o, BaseDBImporter) \
+        and (predicate(o) if predicate else True)
+    yield from iter_classes('.{{ cookiecutter.repo_name }}', obj_predicate=obj_predicate)
+
