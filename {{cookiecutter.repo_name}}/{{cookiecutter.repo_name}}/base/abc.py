@@ -1,6 +1,5 @@
 """Abstract base classes."""
 from abc import ABCMeta, abstractmethod
-from cerberus import Validator
 
 
 class AbstractInterface(metaclass=ABCMeta):
@@ -12,3 +11,8 @@ class AbstractInterface(metaclass=ABCMeta):
     def schema(self):
         """Schema getter."""
         pass
+
+
+class AbstractDBConnector(metaclass=ABCMeta):
+    """Abstract base class for registering database connection objects."""
+    pass

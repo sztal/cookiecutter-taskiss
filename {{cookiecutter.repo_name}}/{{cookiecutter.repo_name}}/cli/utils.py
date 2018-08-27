@@ -6,6 +6,7 @@ from ast import literal_eval
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import safe_print
 from {{ cookiecutter.repo_name }}.cli.exceptions import MalformedArgumentError
+from {{ cookiecutter.repo_name }}.utils.serializers import UniversalJSONEncoder
 
 
 def pprint(obj, indent=None):
@@ -22,7 +23,7 @@ def pprint(obj, indent=None):
     if not indent:
         indent = cfg.getint(MODE, 'pp_indent', fallback=2)
     if isinstance(obj, (list, tuple, Mapping)):
-        safe_print(json.dumps(obj, sort_keys=True, indent=indent))
+        safe_print(json.dumps(obj, sort_keys=True, indent=indent, cls=UniversalJSONEncoder))
     else:
         safe_print(obj)
 

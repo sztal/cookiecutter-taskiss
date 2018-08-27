@@ -39,7 +39,6 @@ class BaseInterface(AbstractInterface):
     --------
     cerberus
     """
-    _schema = None
     _allow_default = False
     _defaultvalue = None
 
