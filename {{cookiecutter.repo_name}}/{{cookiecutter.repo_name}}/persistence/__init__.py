@@ -16,6 +16,7 @@ from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path, make_p
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
 from {{ cookiecutter.repo_name }}.utils import safe_print
 from {{ cookiecutter.repo_name }}.base.meta import Composable
+from {{ cookiecutter.repo_name }}.base.interface import BaseInterface
 from {{ cookiecutter.repo_name }}.base.interface import DiskPersistenceInterface, DBPersistenceInterface
 
 
@@ -31,8 +32,20 @@ class BasePersistence(metaclass=Composable):
     item_name : str
         Name of the items being processed.
     """
-    def __init__(self, settings, item_name='item'):
-        """Initilization method."""
+    _interface = None
+
+    def __init__(self, item_name='item', **kwds):
+        """Initilization method.
+
+        Parameters
+        ----------
+        item_name : str
+            Item name.
+        **kwds :
+            Keyword arguments passed to the constructor of the
+            settings interface.
+        """
+        settings = self.interface(**kwds)
         self.setcomponents_([ ('settings', settings) ])
         self._counter = count(start=1)
         self._count = 0
@@ -47,14 +60,22 @@ class BasePersistence(metaclass=Composable):
         """Exit hook."""
         self.finalize()
 
-    def finalize(self):
-        """Finalize update."""
-        pass
+    @property
+    def interface(self):
+        """Interface getter."""
+        if not self._interface:
+            cn = self.__class__.__name__
+            raise AttributeError(f"'{cn}' does not define interface")
+        return self._interface
 
     @property
     def count(self):
         """Count of processed items getter."""
         return self._count
+
+    def finalize(self):
+        """Finalize update."""
+        pass
 
     def persist(self):
         """Persist an object."""
@@ -128,22 +149,19 @@ class DiskPersistence(BasePersistence):
     This is a base class (does not define proper `persist` method)
     used as a core for concrete peristence classes that write to disk.
     """
-    def __init__(self, settings=None, item_name='item', **kwds):
+    _interface = DiskPersistenceInterface
+
+    def __init__(self, item_name='item', **kwds):
         """Initialization method.
 
         Parameters
         ----------
-        settings : :py:class:`{{ cookiecutter.repo_name }}.base.interface.DiskPersistenceInterface`
-            Disk persistence settings object.
         item_name : str
             Item name.
         **kwds :
             Settings passed to `DiskPersistenceSettings` constructor
-            if `settings=None`.
         """
-        if settings is None:
-            settings = DiskPersistenceInterface(**kwds)
-        super().__init__(settings, item_name)
+        super().__init__(item_name, **kwds)
         self._filepath = None
 
     @property
@@ -188,15 +206,11 @@ class DiskPersistence(BasePersistence):
 class JSONLinesPersistence(DiskPersistence):
     """JSON lines disk persitence component class."""
 
-    def __init__(self, settings=None, json_serializer=JSONEncoder, item_name='item', **kwds):
+    def __init__(self, json_serializer=JSONEncoder, item_name='item', **kwds):
         """Initialization method.
 
         Parameters
         ----------
-        settings : :py:class:`{{ cookiecutter.repo_name }}.base.interface.DiskPersistenceInterface`
-            Settings object.
-            If `None` then an instance of `DiskPersistenceInterface`
-            is created from `**kwds`.
         json_serializer : json.JSONEncoder
             :py:class:`json.JSONEncoder` subclass defining JSON serializer.
             Defaults to
@@ -208,7 +222,7 @@ class JSONLinesPersistence(DiskPersistence):
             :py:class:`{{ cookiecutter.repo_name }}.base.interface.DiskPersistenceInteface`
             when `settings=None`.
         """
-        super().__init__(settings, item_name, **kwds)
+        super().__init__(item_name, **kwds)
         self.json_serializer = json_serializer
 
     def persist(self, doc, print_num=True, **kwds):
@@ -276,23 +290,20 @@ class JSONLinesPersistence(DiskPersistence):
 
 class DBPersistence(BasePersistence):
     """Database persistence base class."""
+    _interface = DBPersistenceInterface
 
-    def __init__(self, settings=None, item_name='record', **kwds):
+    def __init__(self, item_name='record', **kwds):
         """Initialization method.
 
         Parameters
         ----------
-        settings : :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistenceInterface`
-            Database persistence settings.
         item_name : str
             Item name.
         **kwds :
             Keyword arguments used to construct `DBPersistenceInterface`
             if `settings=None`.
         """
-        if settings is None:
-            settings = DBPersistenceInterface(**kwds)
-        super().__init__(settings, item_name)
+        super().__init__(item_name, **kwds)
 
     def get_model_name(self):
         """Get model name."""

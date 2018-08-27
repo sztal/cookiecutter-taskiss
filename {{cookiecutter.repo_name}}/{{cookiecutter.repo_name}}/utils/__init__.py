@@ -1,6 +1,9 @@
 """Miscellaneous and general purpose utilities."""
+import re
 from importlib import import_module
 from click import echo
+
+_rx_pp = re.compile(r"^[\w_.:]+$", re.ASCII)
 
 def safe_print(x, **kwds):
     """Fault-safe print function.
@@ -40,3 +43,16 @@ def import_python(path, package=None):
     if obj:
         return getattr(module, obj)
     return module
+
+def is_python_path(path):
+    """Check if a string is a valid python path.
+
+    Parameters
+    ----------
+    path : str
+        String.
+    """
+    m = _rx_pp.match(path)
+    if not m or path.count(':') > 1:
+        return False
+    return True

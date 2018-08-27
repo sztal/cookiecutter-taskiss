@@ -13,11 +13,16 @@ from collections import defaultdict
 from importlib import import_module
 from celery import Task
 from celery.result import ResultSet
+from celery.task.control import inspect
 from networkx import DiGraph, draw_shell
 from networkx.algorithms import is_directed_acyclic_graph, simple_cycles
 from networkx.algorithms import descendants, topological_sort
 import matplotlib.pyplot as pyplot
 from {{ cookiecutter.repo_name }}.taskiss.utils import merge_results
+from {{ cookiecutter.repo_name }}.taskiss.exceptions import CircularDependenciesError
+from {{ cookiecutter.repo_name }}.taskiss.exceptions import NonExistentTaskDependencyError
+from {{ cookiecutter.repo_name }}.taskiss.exceptions import AmbiguousTaskNameError
+from {{ cookiecutter.repo_name }}.taskiss.exceptions import TaskNotRegisteredError
 
 
 class Scheduler(object):
@@ -28,7 +33,6 @@ class Scheduler(object):
     dependency_graph : :py:class:`networkx.classes.digraph.DiGraph`
         Dependency graph.
     """
-
     def __init__(self, include, build_dependency_graph=True, **kwds):
         """Initialization method.
 
@@ -47,6 +51,11 @@ class Scheduler(object):
             self.build_dependency_graph(**kwds)
         else:
             self.dependency_graph = DiGraph()
+
+    @property
+    def inspector(self):
+        """Celery inspector getter."""
+        return inspect()
 
     def get_registered_tasks(self, only_names=True):
         """Get list of registered Celery tasks.
@@ -67,6 +76,32 @@ class Scheduler(object):
                     task = obj.name if only_names else obj
                     tasks.append(task)
         return tasks
+
+    def resolve_task_name(self, task):
+        """Resolve shortened task name.
+
+        Parameters
+        ----------
+        task : str
+            Task name, possibly only its last *n* components.
+        """
+        tasks = self.get_registered_tasks(only_names=True)
+        candidates = []
+        task_parts = task.split('.')
+        task_n = len(task_parts)
+        for t in tasks:
+            t_parts = t.split('.')
+            t_n = len(t_parts)
+            if t_n < task_n:
+                continue
+            tn = '.'.join(t_parts[-task_n:])
+            if tn == task:
+                candidates.append(t)
+        if len(candidates) == 1:
+            return candidates.pop()
+        elif len(candidates) > 1:
+            raise AmbiguousTaskNameError(task, candidates)
+        raise TaskNotRegisteredError(task)
 
     def get_task(self, task_name):
         """Get task by name.
@@ -255,37 +290,3 @@ class Scheduler(object):
                     tasksort.remove(item)
                 else:
                     yield item
-
-# Exceptions ------------------------------------------------------------------
-
-class CircularDependenciesError(Exception):
-    """Circular dependencies error class."""
-
-    def __init__(self, dependency_graph, *args, **kwds):
-        """Initialization method.
-
-        Parameters
-        ----------
-        dependency_graph : :py:class:`networkx.DiGraph`
-            Dependency graph object.
-        """
-        cycles = simple_cycles(dependency_graph)
-        message = "circular dependencies: {}".format(
-            "; ".join([ "=>".join(cycle) for cycle in cycles ])
-        )
-        super().__init__(message, *args, **kwds)
-
-
-class NonExistentTaskDependencyError(Exception):
-    """Non-existent task dependency error class."""
-
-    def __init__(self, dependency, *args, **kwds):
-        """Initialization method.
-
-        Parameters
-        ----------
-        dependency : str
-            Name of dependency.
-        """
-        message = "Non-existent dependency ('{}') specified".format(dependency)
-        super().__init__(message, *args, **kwds)

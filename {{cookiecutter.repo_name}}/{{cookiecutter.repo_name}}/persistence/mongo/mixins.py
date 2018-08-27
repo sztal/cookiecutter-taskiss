@@ -10,35 +10,70 @@ from {{ cookiecutter.repo_name }}.utils.processors import parse_date, parse_bool
 
 
 BASESCHEMA = {
-        'IntField': {
-            'type': 'integer',
-            'coerce': int
-        },
-        'BooleanField': {
-            'type': 'boolean',
-            'coerce': parse_bool
-        },
-        'DateTimeField': {
-            'type': 'datetime',
-            'coerce': parse_date
-        },
-        'FloatField': {
-            'type': 'float',
-            'coerce': float
-        },
-        'StringField': {
-            'type': 'string',
-            'coerce': str
-        },
-        'ListField': {
-            'type': 'list',
-            'coerce': list
-        },
-        'DictField': {
-            'type': 'dict',
-            'coerce': dict
-        }
+    'IntField': {
+        'type': 'integer',
+        'coerce': int
+    },
+    'BooleanField': {
+        'type': 'boolean',
+        'coerce': parse_bool
+    },
+    'DateTimeField': {
+        'type': 'datetime',
+        'coerce': parse_date
+    },
+    'FloatField': {
+        'type': 'float',
+        'coerce': float
+    },
+    'StringField': {
+        'type': 'string',
+        'coerce': str
+    },
+    'ListField': {
+        'type': 'list',
+        'coerce': list
+    },
+    'DictField': {
+        'type': 'dict',
+        'coerce': dict
     }
+}
+
+ATTRMAP = Validator({
+    'required': {
+        'type': 'boolean',
+        'coerce': lambda x: not bool(x),
+        'rename': 'nullable',
+        'nullable': True
+    },
+    'default': { 'nullable': True },
+    'choices': {
+        'type': 'list',
+        'rename': 'allowed',
+        'nullable': True
+    },
+    'min': {
+        'type': 'integer',
+        'coerce': int,
+        'nullable': True
+    },
+    'max': {
+        'type': 'integer',
+        'coerce': int,
+        'nullable': True
+    },
+    'min_length': {
+        'type': 'integer',
+        'coerce': int,
+        'nullable': True
+    },
+    'max_length': {
+        'type': 'integer',
+        'coerce': int,
+        'nullable': True
+    }
+})
 
 
 class BaseDocumentMixin(object):
@@ -73,12 +108,18 @@ class BaseDocumentMixin(object):
         return cls._fields[field]
 
     @classmethod
+    def _extract_attrs(cls, field):
+        """Extract schema-related field attributes."""
+        dct = { k: getattr(field, k, None) for k in ATTRMAP.schema }
+        dct = ATTRMAP.normalized(dct)
+        return { k: v for k, v in dct.items() if v }
+
+    @classmethod
     def _extract_field_schema(cls, field_name, field):
         """Extract field schema from *Mongoengine* field object."""
         field_type = field.__class__.__name__
         _schema = cls._baseschema.get(field_type, {})
-        if field.default:
-            _schema.update(default=field.default)
+        _schema.update(**cls._extract_attrs(field))
         rename = cls._field_names_map.get(field_name, [])
         if rename and isinstance(rename, str):
             rename = [ rename ]

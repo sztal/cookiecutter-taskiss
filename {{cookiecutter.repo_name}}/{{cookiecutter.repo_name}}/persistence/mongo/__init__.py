@@ -111,7 +111,9 @@ class MongoPersistence(DBPersistence):
     --------
     mongoengine
     """
-    def __init__(self, settings=None, item_name='document', **kwds):
+    _interface = MongoPersistenceInterface
+
+    def __init__(self, item_name='document', **kwds):
         """Initialization method.
 
         Parameters
@@ -125,9 +127,7 @@ class MongoPersistence(DBPersistence):
             :py:class:`{{ cookiecutter.repo_name }}.persistence.mongo.MongoPersistenceInteface`
             when `settings=None`.
         """
-        if not settings:
-            settings = MongoPersistenceInterface(**kwds)
-        super().__init__(settings, item_name)
+        super().__init__(item_name, **kwds)
 
     def persist(self, doc, print_num=True, **kwds):
         """Persist documents in MongoDB in batches.
