@@ -18,6 +18,11 @@ class BaseValidator(Validator):
         ), ())
 
     def __init__(self, *args, allow_unknown=False, purge_unknown=False, **kwds):
-        """Initialization method."""
+        """Initialization method.
+
+        See Also
+        --------
+        cerberus.Validator : `Validator` class and its `__init__` method
+        """
         kwds.update(allow_unknown=allow_unknown, purge_unknown=purge_unknown)
         super().__init__(*args, **kwds)

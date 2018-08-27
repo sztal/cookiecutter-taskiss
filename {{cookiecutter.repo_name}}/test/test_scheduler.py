@@ -19,6 +19,6 @@ def test_execute_task(scheduler):
         { 'x': 10 },
         { 'n': 200 },
         { 'path': '[200] a => b => c' },
-        { '{{ cookiecutter.repo_name }}.taskiss.{{ cookiecutter.taskmodule_name }}.t7': [ '[200] a => b => c' ] }
+        { '_args': [ '[200] a => b => c' ] }
     ]
     assert res == exp

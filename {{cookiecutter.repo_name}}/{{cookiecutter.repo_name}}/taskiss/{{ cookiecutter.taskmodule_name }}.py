@@ -15,37 +15,61 @@ from {{ cookiecutter.repo_name }}.taskiss import taskiss
 
 # Set of example tasks with complex dependency graph --------------------------
 
-@taskiss.task(ignore_result=False)
-def cfg(cfg, **kwds):
+cfg_schema = {
+    'cfg': {
+        'type': 'dict',
+        'schema': {
+            't1': { 'type': 'number' },
+            't2': { 'type': 'number' },
+            't3': { 'type': 'list', 'schema': { 'type': 'string'} }
+        }
+    }
+}
+
+@taskiss.task(ignore_result=False, _interface=cfg_schema)
+def cfg(cfg):
     return { 'cfg': cfg }
 
-@taskiss.task(dependson=[__name__+'.cfg'], ignore_result=False)
-def t1(cfg, **kwds):
+@taskiss.task(dependson=[__name__+'.cfg'], ignore_result=False, _interface=cfg_schema)
+def t1(cfg):
     return { 'x': cfg.get('t1', 0) }
 
-@taskiss.task(dependson=[__name__+'.cfg'], ignore_result=False)
-def t2(cfg, **kwds):
+@taskiss.task(dependson=[__name__+'.cfg'], ignore_result=False, _interface=cfg_schema)
+def t2(cfg):
     time.sleep(1)
     return { 'y': cfg.get('t2', 0) }
 
-@taskiss.task(dependson=[__name__+'.cfg'], ignore_result=False)
-def t3(cfg, **kwds):
+@taskiss.task(dependson=[__name__+'.cfg'], ignore_result=False, _interface=cfg_schema)
+def t3(cfg):
     return { 'strings': cfg.get('t3') }
 
-@taskiss.task(dependson=[__name__+'.t3'], ignore_result=False)
-def t4(strings, **kwds):
+@taskiss.task(dependson=[__name__+'.t3'], ignore_result=False, _interface={
+    'strings': {
+        'type': 'list',
+        'schema': { 'type': 'string' }
+    }
+})
+def t4(strings):
     time.sleep(1)
     return { 'path': " => ".join(strings) }
 
-@taskiss.task(dependson=[__name__+'.t1', __name__+'.t2'], ignore_result=False)
-def t5(x, y, **kwds):
+@taskiss.task(dependson=[__name__+'.t1', __name__+'.t2'], ignore_result=False, _interface={
+    'x': { 'type': 'number' },
+    'y': { 'type': 'number' }
+})
+def t5(x, y):
     return { 'n': x * y }
 
-@taskiss.task(dependson=[__name__+'.t5', __name__+'.t4'], ignore_result=False)
-def t6(path, n, **kwds):
+@taskiss.task(dependson=[__name__+'.t5', __name__+'.t4'], ignore_result=False, _interface={
+    'path': { 'type': 'string' },
+    'n': { 'type': 'number' }
+})
+def t6(path, n):
     time.sleep(1)
     return { 'path': "[{}] {}".format(n, path) }
 
-@taskiss.task(dependson=[__name__+'.t6'], ignore_result=False)
-def t7(path, **kwds):
+@taskiss.task(dependson=[__name__+'.t6'], ignore_result=False, _interface={
+    'path': { 'type': 'string' }
+})
+def t7(path):
     return path

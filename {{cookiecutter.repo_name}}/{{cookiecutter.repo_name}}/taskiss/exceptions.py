@@ -84,3 +84,8 @@ class TaskNotRegisteredError(Exception):
         """
         message = f"Task name '{task}' does not match any registered tasks"
         super().__init__(message, *args, **kwds)
+
+
+class BadTaskArgumentsError(Exception):
+    """Bad task arguments error class."""
+    pass
