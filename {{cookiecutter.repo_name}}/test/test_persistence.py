@@ -7,9 +7,9 @@ from datetime import datetime
 from mongoengine import Document
 from mongoengine import ObjectIdField, StringField, IntField, ListField, DateTimeField
 from {{ cookiecutter.repo_name }}.persistence import JSONLinesPersistence
-from {{ cookiecutter.repo_name }}.persistence.mongo import MongoPersistence
+from {{ cookiecutter.repo_name }}.persistence.db.mongo import MongoPersistence
 from {{ cookiecutter.repo_name }}.persistence.importers import BaseDataImporter
-from {{ cookiecutter.repo_name }}.persistence.mongo.mixins import BaseDocumentMixin
+from {{ cookiecutter.repo_name }}.persistence.db.mongo.mixins import BaseDocumentMixin
 
 
 @pytest.fixture

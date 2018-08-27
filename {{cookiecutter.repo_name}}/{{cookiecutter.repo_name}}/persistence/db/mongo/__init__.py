@@ -12,10 +12,10 @@ from collections import Iterable
 from pymongo import UpdateOne, UpdateMany
 from pymongo.errors import OperationFailure
 import mongoengine
-from {{ cookiecutter.repo_name }}.persistence.mongo.utils import update_action_hook, query_factory
+from {{ cookiecutter.repo_name }}.persistence.db.mongo.utils import update_action_hook, query_factory
 from {{ cookiecutter.repo_name }}.persistence import DBPersistence
 from {{ cookiecutter.repo_name }}.base.interface import DBPersistenceInterface
-from {{ cookiecutter.repo_name }}.persistence.mongo.interface import MongoPersistenceInterface
+from {{ cookiecutter.repo_name }}.persistence.db.mongo.interface import MongoPersistenceInterface
 from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
 
 
@@ -90,13 +90,13 @@ class MongoPersistence(DBPersistence):
 
         Parameters
         ----------
-        settings : :py:class:`{{ cookiecutter.repo_name }}.persistence.mongo.MongoPersistenceInterface`
+        settings : :py:class:`{{ cookiecutter.repo_name }}.persistence.db.mongo.MongoPersistenceInterface`
             MongoDB persistence settings object.
         item_name : str
             Item name
         **kwds :
             Other arguments passed to
-            :py:class:`{{ cookiecutter.repo_name }}.persistence.mongo.MongoPersistenceInterface`
+            :py:class:`{{ cookiecutter.repo_name }}.persistence.db.mongo.MongoPersistenceInterface`
             when `settings=None`.
         """
         super().__init__(item_name, **kwds)
@@ -159,7 +159,7 @@ class MongoPersistence(DBPersistence):
             If `None` then `ordered=False` is passed.
         **kwds :
             Other arguments passed to
-            :py:meth:`{{ cookiecutter.repo_name }}.persistence.mongo.MongoPersistence.make_update.op`.
+            :py:meth:`{{ cookiecutter.repo_name }}.persistence.db.mongo.MongoPersistence.make_update.op`.
         """
         if bulk_write_kwds is None:
             bulk_write_kwds = { 'ordered': False }

@@ -1,5 +1,5 @@
 """Mongo persistence interface."""
-from {{ cookiecutter.repo_name }}.persistence.mongo.utils import query_factory, update_action_hook
+from {{ cookiecutter.repo_name }}.persistence.db.mongo.utils import query_factory, update_action_hook
 from {{ cookiecutter.repo_name }}.base.interface import DBPersistenceInterface
 from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
 

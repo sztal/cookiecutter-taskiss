@@ -8,12 +8,13 @@ import atexit
 from logging import getLogger
 from configparser import ConfigParser, ExtendedInterpolation
 from pymongo import MongoClient
+from mongoengine.base import BaseDocument, DocumentMetaclass, TopLevelDocumentMetaclass
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import log
 from {{ cookiecutter.repo_name }}.utils.path import make_path
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
-from {{ cookiecutter.repo_name }}.persistence import mongo
-from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector
+from {{ cookiecutter.repo_name }}.persistence.db import mongo
+from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractMongoModel
 
 
 __author__ = '{{ cookiecutter.full_name }}'
@@ -23,11 +24,14 @@ __version__ = '{{ cookiecutter.version }}'
 # Register abstract base classes ----------------------------------------------
 
 AbstractDBConnector.register(MongoClient)
+AbstractMongoModel.register(BaseDocument)
+AbstractMongoModel.register(DocumentMetaclass)
+AbstractMongoModel.register(TopLevelDocumentMetaclass)
 
 # Iniitilize application components -------------------------------------------
 
 log.init(cfg.getenvvar(MODE, 'log_root_dir'))
-logger = getLogger('message')
+logger = getLogger()
 mdb = None
 if cfg.getenvvar('DEV', 'db_use', fallback=True, convert_bool=True):
     mdb = mongo.init(
@@ -45,9 +49,9 @@ def exit_handler():
     db = cfg.getenvvar(MODE, 'mongo_db')
     user = cfg.getenvvar(MODE, 'mongo_user')
     mdb[db].logout()
-    logger.info(f"Log out user '{user}' from database '{db}'")
+    logger.info("Log out user '%s' from database '%s'", user, db)
     mdb.close()
-    logger.info(f"MongoDB connection closed [{mdb.name}]")
+    logger.info("MongoDB connection closed [%s]", mdb.name)
 
 atexit.register(exit_handler)
 

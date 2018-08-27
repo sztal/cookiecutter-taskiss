@@ -16,3 +16,12 @@ class AbstractInterface(metaclass=ABCMeta):
 class AbstractDBConnector(metaclass=ABCMeta):
     """Abstract base class for registering database connection objects."""
     pass
+
+
+class AbstractDBModel(metaclass=ABCMeta):
+    """Abstract base class for registering database model classes."""
+    pass
+
+class AbstractMongoModel(AbstractDBModel):
+    """Abstract base class for registering MongoDB model classes."""
+    pass
