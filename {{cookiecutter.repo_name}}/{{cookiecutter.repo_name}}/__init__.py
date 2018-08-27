@@ -5,7 +5,7 @@ This module defines additional top-level exports, main package metadata etc.
 # pylint: disable=C0103
 import os
 from configparser import ConfigParser, ExtendedInterpolation
-from {{ cookiecutter.repo_name }}.cfg import cfg, MODE
+from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import log
 from {{ cookiecutter.repo_name }}.utils.path import make_path
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool

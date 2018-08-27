@@ -1,9 +1,19 @@
-"""Test tasks."""
+"""Tasks definitions.
+
+Attributes section describe additional attributes that may be defined
+on tasks.
+
+Attributes
+----------
+dependson : list or tuple of str
+    List of task names that the task depends on
+noargs : bool
+    Should task be run with immutable signature if chained.
+"""
 import time
 from {{ cookiecutter.repo_name }}.taskiss import taskiss
-from {{ cookiecutter.repo_name }}.taskiss.taskcls import TaskissTask
 
-# Set of tasks with complex dependency graph ----------------------------------
+# Set of example tasks with complex dependency graph --------------------------
 
 @taskiss.task(ignore_result=False)
 def cfg(cfg, **kwds):

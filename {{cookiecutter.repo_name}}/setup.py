@@ -4,9 +4,9 @@ import os
 import sys
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
-    from distutils.core import setup
+    from distutils.core import setup, find_packages
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
@@ -32,6 +32,7 @@ setup(
     url='https://github.com/{{ cookiecutter.github_username }}/{{ cookiecutter.repo_name }}',
     packages=[
         '{{ cookiecutter.repo_name }}',
+        *find_packages()
     ],
     setup_requires=[
         'pytest-runner',
@@ -71,4 +72,8 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
+    entry_points="""
+        [console_scripts]
+        {{ cookiecutter.cli_name }}={{ cookiecutter.repo_name }}.cli:cli
+    """
 )

@@ -6,9 +6,11 @@ pymongo
 mongoengine
 """
 import os
+import re
 import time
 from collections import Iterable
 from pymongo import UpdateOne, UpdateMany
+from pymongo.errors import OperationFailure
 import mongoengine
 from {{ cookiecutter.repo_name }}.persistence.mongo.utils import update_action_hook, query_factory
 from {{ cookiecutter.repo_name }}.persistence import DBPersistence
@@ -35,6 +37,9 @@ def init(user, password, host, port, db, authentication_db=None, use_envvars=Tru
         Authentication databse name.
         Use `db` if `None`.
     """
+    def connect(uri, authentication_source):
+        """Connect to MongoDB."""
+        return mongoengine.connect(host=uri, authentication_source=authentication_db)
     mongo_uri = 'mongodb://{username}:{password}@{host}:{port}/{db}'
     if not authentication_db:
         authentication_db = db
@@ -45,7 +50,17 @@ def init(user, password, host, port, db, authentication_db=None, use_envvars=Tru
         port=port,
         db=db
     )
-    mdb = mongoengine.connect(host=uri, authentication_source=authentication_db)
+    mdb = connect(uri, authentication_db)
+    try:
+        mdb.database_names()
+    except OperationFailure as exc:
+        rx = re.compile(
+            r"Another user is already authenticated to this database",
+            re.IGNORECASE
+        )
+        if rx.search(str(exc)):
+            mdb.get_database().logout()
+            mdb = connect(uri, authentication_db)
     return mdb
 
 

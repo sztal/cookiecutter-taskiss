@@ -1,4 +1,4 @@
-"""Tests for `{{ cookiecutter.repo_name }}` module.
+"""Tests for `{{ cookiecutter.taskmodule_name }}` module.
 
 This is module for idempotent task tests.
 In other words, here `.run()` methods should be tested.
@@ -8,7 +8,7 @@ are avoided, since they do not always work well.
 """
 import os
 import pytest
-from test.tasks import taskiss, t5
+from {{ cookiecutter.repo_name }}.taskiss.{{ cookiecutter.taskmodule_name }} import taskiss, t5
 
 if os.environ.get('RUNTIME_MODE', 'DEV').lower() != 'dev':
     raise ValueError("Non-idempotent tests may be run only with envvar 'RUNTIME_MODE = dev'")

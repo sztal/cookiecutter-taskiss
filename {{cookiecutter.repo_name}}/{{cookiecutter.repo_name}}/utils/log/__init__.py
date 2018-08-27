@@ -4,6 +4,7 @@
 
 import os
 import logging.config
+from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils.path import make_path
 
 
@@ -39,7 +40,7 @@ def make_logging_settings(root_path):
         'handlers': {
             'default': {
                 'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
+                'level': cfg.getenvvar(MODE, 'log_level', fallback='INFO'),
                 'formatter': 'default',
                 'filename': make_path(root_path, '{{ cookiecutter.repo_name }}', '{{ cookiecutter.repo_name }}.log'),
                 'maxBytes': 1048576,
@@ -55,7 +56,7 @@ def make_logging_settings(root_path):
             },
             'message': {
                 'class': 'logging.StreamHandler',
-                'level': 'INFO',
+                'level': cfg.getenvvar(MODE, 'log_level', fallback='INFO'),
                 'formatter': 'message',
                 'stream': 'ext://sys.stdout'
             },
@@ -67,7 +68,7 @@ def make_logging_settings(root_path):
             },
             'taskiss': {
                 'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
+                'level': cfg.getenvvar(MODE, 'log_level', fallback='INFO'),
                 'formatter': 'default',
                 'filename': make_path(root_path, 'taskiss', 'taskiss.log'),
                 'maxBytes': 1048576,
@@ -130,7 +131,7 @@ def make_scrapy_logging_settings(root_path):
         'handlers': {
             'scrapy': {
                 'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
+                'level': cfg.getenvvar(MODE, 'log_level', fallback='INFO'),
                 'formatter': 'default',
                 'filename': make_path(root_path, 'scrapy', 'scrapy.log'),
                 'maxBytes': 1048576,

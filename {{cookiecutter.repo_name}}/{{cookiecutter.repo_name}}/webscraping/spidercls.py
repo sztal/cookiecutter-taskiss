@@ -8,7 +8,7 @@ from scrapy import Spider, Request
 from scrapy.http import HtmlResponse
 from scrapy_splash import SplashRequest, SplashJsonResponse
 from w3lib.url import canonicalize_url
-from {{ cookiecutter.repo_name }}.cfg import cfg, MODE
+from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
 from {{ cookiecutter.repo_name }}.base.interface import ScrapyCLIExtraArgsInterface
 

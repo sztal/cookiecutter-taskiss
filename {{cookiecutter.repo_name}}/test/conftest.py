@@ -10,7 +10,7 @@ Tests can also be run within working
 import os
 import pytest
 from {{ cookiecutter.repo_name }} import MODE
-from {{ cookiecutter.repo_name }}.cfg import cfg
+from {{ cookiecutter.repo_name }}.config import cfg
 from {{ cookiecutter.repo_name }}.taskiss.scheduler import Scheduler
 from {{ cookiecutter.repo_name }}.taskiss.config import include
 
@@ -56,7 +56,7 @@ def celery_config():
             os.environ.get('CELERY_TEST_BROKER_URL', 'pyamqp://'),
         'result_backend':
             os.environ.get('CELERY_TEST_RESULT_BACKEND', 'redis://127.0.0.1'),
-        'include': ['{{cookiecutter.repo_name}}.{{cookiecutter.taskdir_name}}'],
+        'include': ['{{cookiecutter.repo_name}}.{{cookiecutter.taskmodule_name}}'],
         'task_serializer': 'json',
         'result_serializer': 'json',
         'accept_content': ['json'],

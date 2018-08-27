@@ -1,6 +1,6 @@
 """Test _Scheduler_ class."""
 import pytest
-from test.tasks import cfg
+from {{ cookiecutter.repo_name }}.taskiss.{{ cookiecutter.taskmodule_name }} import cfg
 
 
 @pytest.mark.task
@@ -19,6 +19,6 @@ def test_execute_task(scheduler):
         { 'x': 10 },
         { 'n': 200 },
         { 'path': '[200] a => b => c' },
-        { 'test.tasks.t7': [ '[200] a => b => c' ] }
+        { '{{ cookiecutter.repo_name }}.taskiss.{{ cookiecutter.taskmodule_name }}.t7': [ '[200] a => b => c' ] }
     ]
     assert res == exp

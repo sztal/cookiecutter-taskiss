@@ -7,7 +7,7 @@ rx_file : re.Pattern
 """
 import os
 import re
-from {{ cookiecutter.repo_name }}.cfg import cfg, MODE, ROOT_PATH
+from {{ cookiecutter.repo_name }}.config import cfg, MODE, ROOT_PATH
 
 rx_file = re.compile(r"\.[a-z]*$", re.IGNORECASE)
 
@@ -58,11 +58,16 @@ def get_persistence_path(*args, **kwds):
 def is_file(path):
     """Tell if a path is a file path.
 
+    In case of non-existent file paths the file extenstions
+    serves as a file signature.
+
     Parameters
     ----------
     path : str
         Some path.
     """
+    if os.path.exists(path):
+        return os.path.isfile(path)
     return bool(rx_file.search(path))
 
 def make_path(*args, create_dir=True, **kwds):

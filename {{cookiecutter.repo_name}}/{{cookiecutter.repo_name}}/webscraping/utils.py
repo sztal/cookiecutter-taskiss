@@ -7,7 +7,7 @@ from scrapy.http import HtmlResponse
 from w3lib.html import remove_tags, remove_comments, strip_html5_whitespace
 from w3lib.html import replace_entities, replace_escape_chars, replace_tags
 import tldextract as tld
-from {{ cookiecutter.repo_name }}.cfg import cfg, MODE
+from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils.string import hash_string
 
 USER_SALT = cfg.get(MODE, 'web_user_salt')

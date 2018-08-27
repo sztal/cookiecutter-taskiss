@@ -1,15 +1,13 @@
 """Celery application config."""
 import os as _os
-from {{ cookiecutter.repo_name }} import cfg as _cfg
-from {{ cookiecutter.repo_name }} import MODE as _mode
+from {{ cookiecutter.repo_name }}.config import cfg as _cfg
+from {{ cookiecutter.repo_name }}.config import MODE as _mode
 
 # Main URLs
 broker_url = _cfg.getenvvar(_mode, 'celery_broker_url', fallback=None)
 result_backend = _cfg.getenvvar(_mode, 'celery_result_backend', fallback=None)
 # Included modules
-include = ['{{cookiecutter.repo_name}}.taskiss.{{cookiecutter.taskdir_name}}']
-if _mode.lower() == 'dev':
-    include.append('test.tasks')
+include = ['{{cookiecutter.repo_name}}.taskiss.{{cookiecutter.taskmodule_name}}']
 # Other settings
 task_serializer = 'json'
 result_serializer = 'json'
