@@ -12,7 +12,7 @@ import time
 from collections import defaultdict
 from importlib import import_module
 from celery import Task
-from celery.result import ResultSet
+from celery.result import ResultSet, AsyncResult
 from celery.task.control import inspect
 from networkx import DiGraph, draw_shell
 from networkx.algorithms import is_directed_acyclic_graph, simple_cycles
@@ -119,6 +119,22 @@ class Scheduler(object):
             head = task_name[-1]
             task = getattr(import_module(tail), head)
         return task
+
+    def get_tasks_status(self, *task_ids, only_active=True):
+        """Get task(s) status.
+
+        Parameters
+        ----------
+        *task_ids :
+            Task ids.
+        only_active : bool
+            Should only active be returned.
+        """
+        active_ids = self._get_active_tasks_ids()
+        for task_id in task_ids:
+            if task in active_ids:
+                r = AsyncResult(task_id)
+                yield task_id, r.status
 
     def register_task(self, task, check_cycles=True):
         """Register task and rebuild the dependency graph.

@@ -8,6 +8,7 @@ click
 """
 import os
 import click
+from celery.result import AsyncResult
 import {{ cookiecutter.repo_name }}
 from {{ cookiecutter.repo_name }}.taskiss import taskiss as ts
 from {{ cookiecutter.repo_name }}.utils import safe_print
@@ -42,28 +43,39 @@ def tasks():
 #               callback=eager_callback(lambda: ts.scheduler.show_dependency_graph()))
 @tasks.command(name='stats', help="Show Celery stats.")
 def _(): to_console(ts.scheduler.inspector.stats())
+
 @tasks.command(name='report', help="Show Celery inspector report.")
 def _(): to_console(ts.scheduler.inspector.report())
+
 @tasks.command(name='ping', help="Ping Celery process.")
 def _(): to_console(ts.scheduler.inspector.ping())
+
 @tasks.command(name='active-queues', help="Show active Celery queues.")
 def _(): to_console(ts.scheduler.inspector.active_queues())
+
 @tasks.command(name='registered', help="Show registered tasks.")
 def _(): to_console(ts.scheduler.get_registered_tasks())
+
 @tasks.command(name='active', help="Show active tasks.")
 def _(): to_console(ts.scheduler.inspector.active())
+
 @tasks.command(name='scheduled', help="Show scheduled tasks.")
 def _(): to_console(ts.scheduler.inspector.scheduled())
+
 @tasks.command(name='reserved', help="Show reverved tasks.")
 def _(): to_console(ts.scheduler.inspector.reserved())
+
 @tasks.command(name='revoked', help="Show revoked tasks.")
 def _(): to_console(ts.scheduler.inspector.revoked())
+
 @tasks.command(name='conf', help="Get Celery configuration.")
 def _(): to_console(ts.scheduler.inspector.conf())
+
 @tasks.command(name='query-tasks', help="Query tasks by id.")
 @click.argument('ids', nargs=-1, type=str)
 def _(ids):
     to_console(ts.scheduler.inspector.query_task(*ids))
+
 @tasks.command(name='graph', help="Show dependency graph.")
 @click.argument('task', nargs=1, type=str, required=False)
 @click.option('--labels/--no-labels', default=True,
