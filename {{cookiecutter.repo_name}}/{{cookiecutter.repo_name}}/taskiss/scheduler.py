@@ -100,8 +100,8 @@ class Scheduler(object):
         if len(candidates) == 1:
             return candidates.pop()
         elif len(candidates) > 1:
-            raise AmbiguousTaskNameError(task, candidates)
-        raise TaskNotRegisteredError(task)
+            raise AmbiguousTaskNameError.from_task(task, candidates)
+        raise TaskNotRegisteredError.from_task(task)
 
     def get_task(self, task):
         """Get task by name.
@@ -176,7 +176,7 @@ class Scheduler(object):
             return
         for dep in dependencies:
             if dep not in all_tasks:
-                raise NonExistentTaskDependencyError(dep)
+                raise NonExistentTaskDependencyError.from_dependency(dep)
             if dep not in self.dependency_graph.nodes:
                 self.dependency_graph.add_node(dep)
         edges = [ (dep, task.name) for dep in dependencies ]
@@ -202,7 +202,7 @@ class Scheduler(object):
         for task in tasklist:
             self._add_task_dependencies(task)
         if check_cycles and self.circular_dependencies():
-            raise CircularDependenciesError(self.dependency_graph)
+            raise CircularDependenciesError.from_dependency_graph(self.dependency_graph)
 
     def show_dependency_graph(self, task=None, with_labels=True, **kwds):
         """Show dependency graph.

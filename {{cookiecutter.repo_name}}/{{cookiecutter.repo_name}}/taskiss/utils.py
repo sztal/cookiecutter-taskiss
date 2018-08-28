@@ -43,7 +43,7 @@ def merge_results(*args, raise_ambiguous_args=True):
         except (TypeError, AttributeError, ValueError):
             raise TypeError("Can not merge {} with {}".format(results, obj))
     if ambiguous:
-        raise AmbiguousTaskArgumentsError(ambiguous)
+        raise AmbiguousTaskArgumentsError.from_ambiguous(ambiguous)
     if _args:
         results.update(_args=_args)
     return results

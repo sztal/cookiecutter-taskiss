@@ -5,10 +5,11 @@ from networkx.algorithms import simple_cycles
 class AmbiguousTaskArgumentsError(Exception):
     """Embiguous task arguments error class."""
 
-    def __init__(self, ambiguous, *args, **kwds):
-        """Initialization method.
+    @classmethod
+    def from_ambiguous(cls, ambiguous, *args, **kwds):
+        """Dict-based constructor.
 
-        Parameters
+         Parameters
         ----------
         ambiguous : dict
             Dict with keys and ambiguous values.
@@ -16,14 +17,15 @@ class AmbiguousTaskArgumentsError(Exception):
         message = "Ambiguous task arguments for:\n\t{}".format(
             "\n\t".join([ "{} => {}".format(k, v) for k, v in ambiguous.items() ])
         )
-        super().__init__(message, *args, **kwds)
+        return cls(message, *args, **kwds)
 
 
 class CircularDependenciesError(Exception):
     """Circular dependencies error class."""
 
-    def __init__(self, dependency_graph, *args, **kwds):
-        """Initialization method.
+    @classmethod
+    def from_dependency_graph(cls, dependency_graph, *args, **kwds):
+        """Dependency graph based constructor.
 
         Parameters
         ----------
@@ -34,14 +36,15 @@ class CircularDependenciesError(Exception):
         message = "circular dependencies: {}".format(
             "; ".join([ "=>".join(cycle) for cycle in cycles ])
         )
-        super().__init__(message, *args, **kwds)
+        return cls(message, *args, **kwds)
 
 
 class NonExistentTaskDependencyError(Exception):
     """Non-existent task dependency error class."""
 
-    def __init__(self, dependency, *args, **kwds):
-        """Initialization method.
+    @classmethod
+    def from_dependency(cls, dependency, *args, **kwds):
+        """Dependency based constructor.
 
         Parameters
         ----------
@@ -49,14 +52,15 @@ class NonExistentTaskDependencyError(Exception):
             Name of dependency.
         """
         message = "Non-existent dependency ('{}') specified".format(dependency)
-        super().__init__(message, *args, **kwds)
+        return cls(message, *args, **kwds)
 
 
 class AmbiguousTaskNameError(Exception):
     """Ambiguous task name error class."""
 
-    def __init__(self, task, candidates, *args, **kwds):
-        """Initialization method.
+    @classmethod
+    def from_task(cls, task, candidates, *args, **kwds):
+        """Task and candidates based constructor.
 
         Parameters
         ----------
@@ -68,14 +72,15 @@ class AmbiguousTaskNameError(Exception):
         message = "Ambigous task name '{}', matches with: {}".format(
             task, ", ".join(map(str, candidates))
         )
-        super().__init__(message, *args, **kwds)
+        return cls(message, *args, **kwds)
 
 
 class TaskNotRegisteredError(Exception):
     """Task not registered error class."""
 
-    def __init__(self, task, *args, **kwds):
-        """Initialization method.
+    @classmethod
+    def from_task(cls, task, *args, **kwds):
+        """Task based constructor.
 
         Parameters
         ----------
@@ -83,7 +88,7 @@ class TaskNotRegisteredError(Exception):
             Task name, possibly only its last *n* components.
         """
         message = f"Task name '{task}' does not match any registered tasks"
-        super().__init__(message, *args, **kwds)
+        return cls(message, *args, **kwds)
 
 
 class BadTaskArgumentsError(Exception):

@@ -99,16 +99,16 @@ def parse_args(*args, eval_args=False, repeated=False):
         try:
             key, value = arg.split("=")
         except ValueError:
-            raise MalformedArgumentError(arg)
+            raise MalformedArgumentError.from_arg(arg)
         if eval_args:
             try:
                 value = literal_eval(value)
             except (ValueError, TypeError):
-                raise MalformedArgumentError(arg)
+                raise MalformedArgumentError.from_arg(arg)
         if repeated:
             kwds[key].append(value)
         else:
             if key in kwds:
-                raise RepeatedArgumentError(key, [ kwds[key], value ])
+                raise RepeatedArgumentError.from_arg(key, [ kwds[key], value ])
             kwds[key] = value
     return kwds

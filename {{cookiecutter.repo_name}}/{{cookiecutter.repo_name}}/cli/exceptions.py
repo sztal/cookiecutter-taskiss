@@ -4,16 +4,31 @@
 class MalformedArgumentError(Exception):
     """Malformed command-line argument error."""
 
-    def __init__(self, arg, *args, **kwds):
-        """Initialization method."""
-        message = f"Malformed argument {arg}"
-        super().__init__(message, *args, **kwds)
+    @classmethod
+    def from_arg(cls, arg, *args, **kwds):
+        """Argument based constructor.
+
+        Parameters
+        ----------
+        arg : str
+            Argument.
+        """
+        return cls(f"Malformed argument {arg}", *args, **kwds)
 
 
 class RepeatedArgumentError(Exception):
     """Repeated command-line argument error."""
 
-    def __init__(self, arg, values, *args, **kwds):
-        """Initialization method."""
+    @classmethod
+    def from_arg(cls, arg, values, *args, **kwds):
+        """Argument and values based constructor.
+
+        Parameters
+        ----------
+        arg : str
+            Argument name.
+        values : Iterable
+            Argument values.
+        """
         message = f"Argument '{arg}' is repeated with values: {', '.join(values)}"
-        super().__init__(message, *args, **kwds)
+        return cls(message, *args, **kwds)
