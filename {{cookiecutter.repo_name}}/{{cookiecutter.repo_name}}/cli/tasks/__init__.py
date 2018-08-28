@@ -76,12 +76,12 @@ def _(task, labels):
 @click.option('--arg', '-a', type=str, multiple=True,
               help="Args passed to the task (i.e. -a x=10).")
 @click.option('--evalarg', '-e', type=str, multiple=True,
-              help="Literal evaluated args passed to the task (i.e. -e x=['a'])")
+              help="Literal evaluated args passed to the task (i.e. -e x=['a']).")
 @click.option('--get', '-g', type=int, required=False,
               help="Wait for given time to evaluate async results of the root task.")
 def _(task, recursive, timeout, wait, arg, evalarg, get):
     """Run task."""
-    kwds = { **parse_args(*arg), **parse_args(*evalarg, eval_args=True)}
+    kwds = { **parse_args(*arg), **parse_args(*evalarg, eval_args=True) }
     queue = ts.scheduler.run_task(
         task=task,
         timeout=timeout,

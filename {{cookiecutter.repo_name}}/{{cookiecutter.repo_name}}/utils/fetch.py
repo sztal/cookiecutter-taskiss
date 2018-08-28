@@ -41,7 +41,7 @@ def get_db_model(path_or_name, package=None, **kwds):
         :py:function:`{{ cookiecutter.repo_name }}.utils.fetch.iter_db_models`.
     """
     if is_python_path(path_or_name, object_only=True):
-        return import_python(path_or_name)
+        return import_python(path_or_name, package=package)
     for model in iter_db_models(**kwds):
         if model.__name__ == path_or_name:
             return model
@@ -68,7 +68,7 @@ def get_db_importer(path_or_name, package=None, **kwds):
         :py:function:`{{ cookiecutter.repo_name }}.utils.fetch.iter_db_importers`.
     """
     if is_python_path(path_or_name, object_only=True):
-        return import_python(path_or_name)
+        return import_python(path_or_name, package=package)
     for importer in iter_db_importers(**kwds):
         if importer.__name__ == path_or_name:
             return importer
@@ -95,7 +95,7 @@ def get_persistence(path_or_name, package=None, **kwds):
         :py:function:`{{ cookiecutter.repo_name }}.utils.fetch.iter_persistence`.
     """
     if is_python_path(path_or_name, object_only=True):
-        return import_python(path_or_name)
+        return import_python(path_or_name, package=package)
     for persistence in iter_persistence(**kwds):
         if persistence.__name__ == path_or_name:
             return persistence

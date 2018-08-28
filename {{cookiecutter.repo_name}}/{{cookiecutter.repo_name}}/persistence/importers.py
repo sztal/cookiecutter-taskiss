@@ -43,6 +43,11 @@ class BaseDBImporter:
             cls._interface = DBImporterValidator(cls._interface)
         return cls._interface
 
+    @property
+    def schema(self):
+        """Schema getter."""
+        return self.get_schema()
+
     def import_data(self, data, print_num=True, **kwds):
         """Import data function.
 

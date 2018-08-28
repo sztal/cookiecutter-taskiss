@@ -62,14 +62,6 @@ class BasePersistence(metaclass=Composable):
         """Exit hook."""
         self.finalize()
 
-    @classmethod
-    def get_schema(cls):
-        """Get schema object."""
-        if cls._interface is None:
-            cn = cls.__class__.__name__
-            raise AttributeError(f"'{cn}' does not define interface")
-        return cls._interface
-
     @property
     def interface(self):
         """Interface getter."""
@@ -112,11 +104,11 @@ class BasePersistence(metaclass=Composable):
         **kwds :
             Optional keyword arguments used to format the message string.
         """
-        item_name = item_name if item_name is None else self.item_name
+        item_name = item_name if item_name else self.item_name
         n = next(self._counter)
         self._count = n
         if print_num and n > 1:
-            safe_print(msg.format(item_name=item_name, n=n, **kwds))
+            safe_print(msg.format(item_name=item_name, n=n, **kwds), nl=False)
         return n
 
     def log(self, msg, *args, method='info', **kwds):

@@ -1,7 +1,7 @@
 """Command-line interface utilities."""
 # pylint: disable=W0613
 import json
-from collections import Iterable, Mapping
+from collections import Iterable, Sequence, Mapping
 from ast import literal_eval
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import safe_print
@@ -68,8 +68,7 @@ def to_console(obj):
         Other iterables are iterated and printed.
         Iterables within iterables are printed as is.
     """
-    if isinstance(obj, str) or isinstance(obj, Mapping) \
-    or not isinstance(obj, Iterable):
+    if isinstance(obj, str) or not isinstance(obj, Sequence):
         obj = [obj]
     for o in obj:
         pprint(o)

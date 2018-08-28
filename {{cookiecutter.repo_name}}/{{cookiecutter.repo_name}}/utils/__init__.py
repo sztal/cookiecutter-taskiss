@@ -6,18 +6,20 @@ from click import echo
 
 _rx_pp = re.compile(r"^[\w_.:]+$", re.ASCII)
 
-def safe_print(x, **kwds):
+def safe_print(x, nl=True, **kwds):
     """Fault-safe print function.
 
     Parameters
     ----------
     x : any
         An object dumpable to str.
+    nl : bool
+        Should new line be printed after the content.
     **kwds :
         Other arguments passed to `click.echo`.
     """
     try:
-        echo(x, **kwds)
+        echo(x, nl=nl, **kwds)
     except UnicodeEncodeError:
         x = str(x).encode('utf-8', 'replace')
         echo(x, **kwds)
@@ -110,3 +112,36 @@ def iter_classes(path='.', obj_predicate=None, **kwds):
         except TypeError:
             return False
     yield from iter_objects(path, obj_predicate=wrapped_obj_predicate, **kwds)
+
+def get_class(path_or_name, package=None, **kwds):
+    """Get a class object by python path or name.
+
+    Parameters
+    ----------
+    path_or_name : str
+        Proper python path or class name.
+    package : str or None
+        Passed to
+        :py:function:`{{ cookiecutter.repo_name }}.utils.import_python`.
+    **kwds :
+        Keyword arguments passed to
+        :py:function:`{{ cookiecutter.repo_name }}.utils.iter_classes`.
+
+    Raises
+    ------
+    ValueError
+        If there are multiple matches, what may happen when using a class name
+        instead of a fully qualified python path.
+    """
+    matches = []
+    if is_python_path(path_or_name, object_only=True):
+        return import_python(path_or_name, package=package)
+    for clsobj in iter_classes(**kwds):
+        if clsobj.__name__ == path_or_name and clsobj not in matches:
+            matches.append(clsobj)
+    if len(matches) == 1:
+        return matches.pop()
+    if len(matches) > 1:
+        msg = f"Multiple matches ({', '.join(map(str, matches))})"
+        raise ValueError(msg)
+    return None

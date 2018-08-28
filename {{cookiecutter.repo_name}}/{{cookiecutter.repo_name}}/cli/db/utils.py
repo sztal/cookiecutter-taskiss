@@ -2,6 +2,7 @@
 from {{ cookiecutter.repo_name }}.utils.fetch import iter_db_connectors, iter_db_models
 from {{ cookiecutter.repo_name }}.utils.fetch import iter_db_importers
 from {{ cookiecutter.repo_name }}.utils.fetch import get_db_model, get_db_importer
+from {{ cookiecutter.repo_name }}.utils.fetch import get_persistence
 from {{ cookiecutter.repo_name }}.cli.utils import pprint, show_unique
 from {{ cookiecutter.repo_name }}.base.abc import AbstractMongoModel
 
@@ -62,5 +63,5 @@ def run_db_importer(importer, persistence, **kwds):
         Keyword arguments passed both to the importer and the persistence.
         This can be done without any risk thanks to the interfaces.
     """
-    pass
-
+    persistence = get_persistence(persistence)(**kwds)
+    importer = get_db_importer(importer)(persistence, **kwds)
