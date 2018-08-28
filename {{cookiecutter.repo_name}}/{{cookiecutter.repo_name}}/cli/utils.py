@@ -1,11 +1,12 @@
 """Command-line interface utilities."""
 # pylint: disable=W0613
 import json
-from collections import Iterable, Sequence, Mapping
+from collections import Iterable, Sequence, Mapping, defaultdict
+from types import GeneratorType
 from ast import literal_eval
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.cli.exceptions import MalformedArgumentError
+from {{ cookiecutter.repo_name }}.cli.exceptions import MalformedArgumentError, RepeatedArgumentError
 from {{ cookiecutter.repo_name }}.utils.serializers import UniversalJSONEncoder
 
 
@@ -58,7 +59,7 @@ def eager_callback(callback, *args, **kwds):
         ctx.exit()
     return callback_wrapper
 
-def to_console(obj):
+def to_console(obj, unique=False):
     """Print object to the console.
 
     Parameters
@@ -67,13 +68,17 @@ def to_console(obj):
         String and non-terables are printed as is.
         Other iterables are iterated and printed.
         Iterables within iterables are printed as is.
+    unique : bool
+        Should duplicated objects be shown only once.
     """
-    if isinstance(obj, str) or not isinstance(obj, Sequence):
+    if isinstance(obj, str) or not isinstance(obj, (Sequence, GeneratorType)):
         obj = [obj]
+    if unique:
+        show_unique(obj)
     for o in obj:
         pprint(o)
 
-def parse_args(*args, eval_args=False):
+def parse_args(*args, eval_args=False, repeated=False):
     """Parse command-line arguments.
 
     Parameters
@@ -84,8 +89,12 @@ def parse_args(*args, eval_args=False):
         If `eval_args=True` then value are first evaluated as literal python
         code using safe evaluation implemented in
         :py:function:`ast.literal_eval`.
+    repeated : bool
+        Should repeated arguments be allowed.
+        Note that in this case all keys' values are represented as lists.
+        In fact, a `defaultdict(list)` is returned.
     """
-    kwds = {}
+    kwds = defaultdict(list) if repeated else {}
     for arg in args:
         try:
             key, value = arg.split("=")
@@ -96,5 +105,10 @@ def parse_args(*args, eval_args=False):
                 value = literal_eval(value)
             except (ValueError, TypeError):
                 raise MalformedArgumentError(arg)
-        kwds[key] = value
+        if repeated:
+            kwds[key].append(value)
+        else:
+            if key in kwds:
+                raise RepeatedArgumentError(key, [ kwds[key], value ])
+            kwds[key] = value
     return kwds
