@@ -7,7 +7,6 @@ easy adjusting input data to a given model schema.
 from mongoengine.base.fields import BaseField
 from cerberus import Validator
 from {{ cookiecutter.repo_name }}.utils.processors import parse_date, parse_bool
-from {{ cookiecutter.repo_name }}.persistence.db import BaseDBModelMixin
 
 
 BASESCHEMA = {
@@ -77,7 +76,7 @@ ATTRMAP = Validator({
 })
 
 
-class BaseDocumentMixin(BaseDBModelMixin):
+class BaseDocumentMixin:
     """Base document class mixin providing helper methods."""
     _field_names_map = {}
     _schema = None

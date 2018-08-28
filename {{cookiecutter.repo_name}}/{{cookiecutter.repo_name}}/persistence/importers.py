@@ -9,9 +9,10 @@ from collections import Mapping
 import json
 from {{ cookiecutter.repo_name }}.base.validators import ImporterValidator
 from {{ cookiecutter.repo_name }}.base.validators import copy_schema
+from {{ cookiecutter.repo_name }}.base.abc import AbstractImporter
 
 
-class BaseImporter:
+class BaseImporter(AbstractImporter):
     """Data importer base class."""
     _interface = {
         'data': { 'type': 'iterable' },

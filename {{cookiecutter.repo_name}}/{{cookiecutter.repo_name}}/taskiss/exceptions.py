@@ -1,4 +1,4 @@
-"""_Taskiss_ exception classes."""
+"""*Taskiss* exception classes."""
 from networkx.algorithms import simple_cycles
 
 

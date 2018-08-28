@@ -17,12 +17,17 @@ from {{ cookiecutter.repo_name }}.utils.path import make_path, make_filepath
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
 from {{ cookiecutter.repo_name }}.utils import safe_print
 from {{ cookiecutter.repo_name }}.base.meta import Composable
-from {{ cookiecutter.repo_name }}.base.interface import BaseInterface
 from {{ cookiecutter.repo_name }}.base.interface import DiskPersistenceInterface, DBPersistenceInterface
 from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
+from {{ cookiecutter.repo_name }}.base.abc import AbstractPersistenceMetaclass
 
 
-class BasePersistence(metaclass=Composable):
+class AbstractComposablePersistenceMetaclass(AbstractPersistenceMetaclass, Composable):
+    """Composable persistence abstract metaclass."""
+    pass
+
+
+class BasePersistence(metaclass=AbstractComposablePersistenceMetaclass):
     """Base persistence class.
 
     It defines the main persistence interface which is the `persist` method.

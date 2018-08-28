@@ -24,6 +24,10 @@ class AbstractPersistenceMetaclass(ABCMeta):
     """Abstract persistence metaclass."""
     pass
 
+class AbstractMongoModelMetaclass(AbstractDBModelMetaclass):
+    """Abstract *MongoDB* model metaclass."""
+    pass
+
 
 # Abstract classes ------------------------------------------------------------
 

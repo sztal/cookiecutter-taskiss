@@ -1,7 +1,10 @@
 """Mongoengine model classes."""
 from mongoengine import Document
 from mongoengine import ObjectIdField, StringField, IntField
+from mongoengine.base import TopLevelDocumentMetaclass
 from {{ cookiecutter.repo_name }}.persistence.db.mongo.mixins import BaseDocumentMixin
+from {{ cookiecutter.repo_name }}.base.abc import AbstractMongoModelMetaclass
+
 
 
 class ExampleMongoModel(Document, BaseDocumentMixin):

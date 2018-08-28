@@ -1,30 +1,24 @@
 """Utilities for fetching various kinds of classes and objects."""
-from {{ cookiecutter.repo_name }}.utils import iter_objects, iter_classes
+from {{ cookiecutter.repo_name }}.utils import iter_objects, iter_classes, findone
 from {{ cookiecutter.repo_name }}.utils import is_python_path, import_python
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractDBModel
-from {{ cookiecutter.repo_name }}.base.abc import AbstractImporter, AbstractPersistence
-from {{ cookiecutter.repo_name }}.persistence import BasePersistence
-from {{ cookiecutter.repo_name }}.persistence.db import BaseDBModelMixin
-from {{ cookiecutter.repo_name }}.persistence.importers import BaseImporter
+from {{ cookiecutter.repo_name }}.base.abc import AbstractImporterMetaclass, AbstractPersistenceMetaclass
+
 
 
 def iter_db_connectors(predicate=None):
     """Iter over available db connectors."""
-    connections = iter_objects(
-        path='.{{ cookiecutter.repo_name }}',
-        obj_predicate=lambda x: isinstance(x, AbstractDBConnector),
-    )
-    for conn in connections:
-        if predicate and not predicate(conn):
-            continue
-        yield conn
+    obj_predicate=lambda x: isinstance(x, AbstractDBConnector) \
+        and (predicate(o) if predicate else True)
+    yield from iter_objects('.{{ cookiecutter.repo_name }}',
+                               obj_predicate=obj_predicate)
 
 def iter_db_models(predicate=None):
     """Iter over available db models."""
-    obj_predicate = lambda o: \
-        issubclass(o, AbstractDBModel) and issubclass(o, BaseDBModelMixin) \
+    obj_predicate = lambda o: isinstance(o, AbstractDBModel) \
         and (predicate(o) if predicate else True)
-    yield from iter_classes('.{{ cookiecutter.repo_name }}', obj_predicate=obj_predicate)
+    yield from iter_classes('.{{ cookiecutter.repo_name }}',
+                            obj_predicate=obj_predicate)
 
 def get_db_model(path_or_name, package=None, **kwds):
     """Get a database model class by python path or name.
@@ -42,16 +36,16 @@ def get_db_model(path_or_name, package=None, **kwds):
     """
     if is_python_path(path_or_name, object_only=True):
         return import_python(path_or_name, package=package)
-    for model in iter_db_models(**kwds):
-        if model.__name__ == path_or_name:
-            return model
+    models = iter_db_models(**kwds)
+    return findone(models, lambda x: x.__name__ == path_or_name,
+                   ambiguous_match='raise_if_not_unique')
 
 def iter_importers(predicate=None):
     """Iter over available db importers."""
-    obj_predicate = lambda o: \
-        issubclass(o, AbstractImporter) and issubclass(o, BaseImporter) \
+    obj_predicate = lambda o: isinstance(o, AbstractImporterMetaclass) \
         and (predicate(o) if predicate else True)
-    yield from iter_classes('.{{ cookiecutter.repo_name }}', obj_predicate=obj_predicate)
+    yield from iter_classes('.{{ cookiecutter.repo_name }}',
+                            obj_predicate=obj_predicate)
 
 def get_importer(path_or_name, package=None, **kwds):
     """Get a database importer class by python path or name.
@@ -69,16 +63,16 @@ def get_importer(path_or_name, package=None, **kwds):
     """
     if is_python_path(path_or_name, object_only=True):
         return import_python(path_or_name, package=package)
-    for importer in iter_importers(**kwds):
-        if importer.__name__ == path_or_name:
-            return importer
+    importers = iter_importers(**kwds)
+    return findone(importers, lambda x: x.__name__ == path_or_name,
+                   ambiguous_match='raise_if_not_unique')
 
 def iter_persistence(predicate=None):
     """Iter over available persistence classes."""
-    obj_predicate = lambda o: \
-        issubclass(o, AbstractPersistence) and issubclass(o, BasePersistence) \
+    obj_predicate = lambda o: isinstance(o, AbstractPersistenceMetaclass) \
         and (predicate(o) if predicate else True)
-    yield from iter_classes('.{{ cookiecutter.repo_name }}', obj_predicate=obj_predicate)
+    yield from iter_classes('.{{ cookiecutter.repo_name }}',
+                            obj_predicate=obj_predicate)
 
 def get_persistence(path_or_name, package=None, **kwds):
     """Get a persistence class by python path or name.
@@ -96,6 +90,6 @@ def get_persistence(path_or_name, package=None, **kwds):
     """
     if is_python_path(path_or_name, object_only=True):
         return import_python(path_or_name, package=package)
-    for persistence in iter_persistence(**kwds):
-        if persistence.__name__ == path_or_name:
-            return persistence
+    persistence = iter_persistence(**kwds)
+    return findone(persistence, lambda x: x.__name__ == path_or_name,
+                   ambiguous_match='raise_if_not_unique')

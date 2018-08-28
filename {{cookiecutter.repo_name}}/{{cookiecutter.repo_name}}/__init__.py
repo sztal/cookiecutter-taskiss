@@ -8,7 +8,7 @@ import atexit
 from logging import getLogger
 from configparser import ConfigParser, ExtendedInterpolation
 from pymongo import MongoClient
-from mongoengine.base import BaseDocument, DocumentMetaclass, TopLevelDocumentMetaclass
+from mongoengine.base import DocumentMetaclass
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import log
 from {{ cookiecutter.repo_name }}.utils.path import make_path
@@ -17,7 +17,6 @@ from {{ cookiecutter.repo_name }}.persistence.db import mongo as mongodb
 from {{ cookiecutter.repo_name }}.persistence.importers import BaseImporter
 from {{ cookiecutter.repo_name }}.persistence import BasePersistence
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractMongoModel
-from {{ cookiecutter.repo_name }}.base.abc import AbstractImporter, AbstractPersistence
 
 
 __author__ = '{{ cookiecutter.full_name }}'
@@ -27,11 +26,7 @@ __version__ = '{{ cookiecutter.version }}'
 # Register abstract base classes ----------------------------------------------
 
 AbstractDBConnector.register(MongoClient)
-AbstractMongoModel.register(BaseDocument)
 AbstractMongoModel.register(DocumentMetaclass)
-AbstractMongoModel.register(TopLevelDocumentMetaclass)
-AbstractImporter.register(BaseImporter)
-AbstractPersistence.register(BasePersistence)
 
 # Iniitilize application components -------------------------------------------
 

@@ -3,6 +3,7 @@ import re
 from importlib import import_module
 from pkgutil import walk_packages
 from click import echo
+from {{ cookiecutter.repo_name }}.exceptions import AmbiguousMatchError
 
 _rx_pp = re.compile(r"^[\w_.:]+$", re.ASCII)
 
@@ -112,6 +113,41 @@ def iter_classes(path='.', obj_predicate=None, **kwds):
         except TypeError:
             return False
     yield from iter_objects(path, obj_predicate=wrapped_obj_predicate, **kwds)
+
+def findone(iterable, predicate, ambiguous_match='ignore'):
+    """Find first element satisfying a predicate.
+
+    Parameters
+    ----------
+    iterable : Iterable
+        Some iterable.
+    predicate : callable
+        Predicate function.
+    ambiguous_match : {'ignore', 'raise', 'raise_if_not_unique'}
+        Ignore any and return first matching object if 'ignore'.
+        Raise if matching objects are not the same object if 'raise_if_not_unique'.
+        Raise for any multiple match if 'raise'.
+
+    Raises
+    ------
+    AmbiguousMatchError
+        If `raise_if_ambiguous=True` and there is more than one match.
+    """
+    _vals = ['ignore', 'raise_if_not_unique', 'raise']
+    if ambiguous_match not in _vals:
+        raise ValueError(f"'ambiguous_match' must be on of: \'{', '.join(_vals)}\'")
+    match = None
+    for item in iterable:
+        if predicate(item):
+            if ambiguous_match != 'ignore':
+                return item
+            if match is None:
+                match = item
+            elif ambiguous_match == 'raise':
+                raise AmbiguousMatchError.from_matches([item, match])
+            elif match is not item:
+                raise AmbiguousMatchError.from_matches([item, match])
+    return match
 
 def get_class(path_or_name, package=None, **kwds):
     """Get a class object by python path or name.
