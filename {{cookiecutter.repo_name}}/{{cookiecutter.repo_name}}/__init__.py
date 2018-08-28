@@ -38,7 +38,7 @@ AbstractPersistence.register(BasePersistence)
 log.init(cfg.getenvvar(MODE, 'log_root_dir'))
 logger = getLogger()
 mongo = None
-if cfg.getenvvar('DEV', 'mongo_use', fallback=True, convert_bool=True):
+if cfg.getenvvar('DEV', 'use_mongo', fallback=True, convert_bool=True):
     mongo = mongodb.init(
         user=cfg.getenvvar(MODE, 'mongo_user'),
         password=cfg.getenvvar(MODE, 'mongo_pass'),

@@ -13,6 +13,7 @@ from {{ cookiecutter.repo_name }}.base.abc import AbstractInterface
 from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
 from {{ cookiecutter.repo_name }}.base import BaseInterface
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
+from {{ cookiecutter.repo_name }}.utils.log import get_logger
 
 
 class DiskPersistenceInterface(BaseInterface):
@@ -36,7 +37,12 @@ class DiskPersistenceInterface(BaseInterface):
         'filename': { 'type': 'string' },
         'dirpath': { 'type': 'string' },
         'batch_size': { 'type': 'integer', 'coerce': int, 'default': 0 },
-        'logger': { 'type': 'logger', 'nullable': True, 'default': None }
+        'logger': {
+            'type': 'logger',
+            'nullable': True,
+            'default': None,
+            'coerce': get_logger
+        }
     })
 
 
@@ -80,7 +86,12 @@ class DBPersistenceInterface(BaseInterface):
         'n_retry': { 'type': 'integer', 'coerce': int, 'default': 2 },
         'backoff_time': { 'type': 'integer', 'coerce': int, 'default': 5 },
         'backoff_base': { 'type': 'number', 'default': 2, 'min': 0 },
-        'logger': { 'type': 'logger', 'nullable': True, 'default': None },
+        'logger': {
+            'type': 'logger',
+            'nullable': True,
+            'default': None,
+            'coerce': get_logger
+        },
         'clear_model': { 'nullable': True, 'default': None }
     })
 

@@ -61,7 +61,7 @@ def importer(MongoModel):
         model=MongoModel,
         query='title',
         batch_size=440,
-        logger=getLogger(),
+        logger=True,
         backoff_time=0
     ))
     return importer
@@ -109,7 +109,7 @@ class TestJSONLinesImporterWithMongoPersistence:
                 model='ExampleMongoModel',
                 query='text',
                 clear_model={},
-                logger=getLogger()
+                logger=True
             )
         except Exception as exc:
             pytest.fail(str(exc))

@@ -8,6 +8,7 @@ mongoengine
 import os
 import re
 import time
+import math
 from collections import Iterable, Mapping
 from pymongo import UpdateOne, UpdateMany
 from pymongo.errors import OperationFailure
@@ -121,7 +122,7 @@ class MongoPersistence(DBPersistence):
 
     def finalize(self):
         """Update last batch regardless of the size."""
-        self.do_update(min_batch_size=0)
+        self.do_update(min_batch_size=1)
 
     def make_update_op(self, doc, multiple=None, upsert=None, **kwds):
         """Make :py:module:`pymongo` update op.
@@ -170,35 +171,6 @@ class MongoPersistence(DBPersistence):
         if bulk_ops:
             self.model._get_collection().bulk_write(bulk_ops, **bulk_write_kwds)
 
-    def log_update_error(self, n_retry, exc, collection_name):
-        """Log update error.
-
-        Parameters
-        ----------
-        n_retry : int
-            Number of retry that was made.
-        exc : Exception
-            Exception object.
-        collection_name : str
-            Collection name.
-        """
-        if not self.n_retry or self.n_retry < 0:
-            errmsg = f"Failed to update collection '{collection_name}'"
-            self.log(errmsg, method='exception', exc_info=exc)
-        else:
-            n_retry_left = self.n_retry - n_retry
-            if n_retry == 0:
-                errmsg = "Update for collection '{}' failed {} times. Stop retrying.".format(
-                    collection_name, self.n_retry
-                )
-                self.log(errmsg, method='exception', exc_info=exc)
-            else:
-                errmsg = "Update for collection '{}' failed {} times. Retrying {} times.".format(
-                    collection_name, n_retry, n_retry_left
-                )
-                self.log(errmsg, method='exception', exc_info=exc)
-
-
     def do_update(self, min_batch_size=None, update=None, **kwds):
         """Persist a batch of documents in MongoDB.
 
@@ -220,29 +192,47 @@ class MongoPersistence(DBPersistence):
         """
         if update is None:
             update = self.update
-        collection_name = self.model._get_collection_name()
+        coll_name = self.model._get_collection_name()
+        n_docs = len(self.queue)
         # Check if update should be done considering selected batch size
         if min_batch_size is None:
             if not self.batch_size or self.batch_size <= 0:
-                min_batch_size = len(self.queue)
+                min_batch_size = math.inf
             else:
                 min_batch_size = self.batch_size
         elif min_batch_size <= 0:
-            min_batch_size = len(self.queue)
-        if len(self.queue) < min_batch_size:
+            min_batch_size = math.inf
+        if n_docs < min_batch_size:
             return False
         # Perform update
-        if not update:
-            docs = [ self.model(**self.queue.pop()) for _ in range(len(self.queue)) ]
-            self.model.objects.insert(docs)
-        else:
+        n_attempts = 1 + self.n_retry
+        attempt = 0
+        exc = None
+        while attempt < n_attempts:
+            attempt += 1
             try:
-                self.make_bulk_update(**kwds)
+                if not update:
+                    docs = [ self.model(**self.queue.pop()) for _ in range(n_docs) ]
+                    self.model.objects.insert(docs)
+                else:
+                    self.make_bulk_update(**kwds)
+                exc = None
+                break
             except Exception as exc:
-                if not self.n_retry or self.n_retry < 0:
-                    self.log_update_error(-1, exc, collection_name)
-                    raise exc
-                n_retry = 0
+                n_left = n_attempts - attempt
+                if n_attempts == 1:
+                    m = f"Update attempt for collection '{coll_name}' failed."
+                elif n_left > 0:
+                    m = f"Update attempt no. {attempt} for collection '{coll_name}' failed. Retrying {n_left} times."
+                else:
+                    m = f"Last update attempt for collection '{coll_name}' (no. {attempt} failed. Stop trying."
+                if self.logger:
+                    self.logger.exception(m)
+        if exc:
+            raise exc
+        m = f"Updated {n_docs} records in collection '{coll_name}' ({self.count} in total)."
+        if self.logger:
+            self.logger.info(m)
 
     def get_model_name(self):
         """Get collection model name."""

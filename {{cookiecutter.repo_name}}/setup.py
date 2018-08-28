@@ -36,11 +36,13 @@ setup(
     ],
     setup_requires=[
         'pytest-runner',
-        'pytest-pylint'
     ],
-    test_requires=[
+    tests_require=[
         'pytest',
-        'pylint'
+        'pylint',
+        'pytest-pylint',
+        'pytest-profiling',
+        'coverage'
     ],
     package_dir={'{{ cookiecutter.repo_name }}': '{{ cookiecutter.repo_name }}'},
     include_package_data=True,

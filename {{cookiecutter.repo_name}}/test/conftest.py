@@ -14,10 +14,15 @@ from {{ cookiecutter.repo_name }}.config import cfg
 from {{ cookiecutter.repo_name }}.taskiss.scheduler import Scheduler
 from {{ cookiecutter.repo_name }}.taskiss.config import include
 
+
 # Custom options --------------------------------------------------------------
 
 def pytest_addoption(parser):
     """Additional custom `pytest` command line options."""
+    parser.addoption(
+        '--all', action='store_true', default=False,
+        help="Run all tests. Database test still need to be enabled in the configuration."
+    )
     parser.addoption(
         '--run-tasks', action='store_true', default=False,
         help="Run task tests."
@@ -29,18 +34,21 @@ def pytest_addoption(parser):
 
 def pytest_collection_modifyitems(config, items):
     """Modify test runner behavior based on `pytest` settings."""
-    if not config.getoption('--run-tasks') \
-    or not cfg.getenvvar(MODE, 'celery_use', fallback=True, convert_bool=True):
+    use_mongo = cfg.getenvvar(MODE, 'use_mongo', fallback=True, convert_bool=True)
+    use_celery = cfg.getenvvar(MODE, 'use_celery', fallback=True, convert_bool=True)
+    run_all = config.getoption('--all')
+    run_tasks = use_celery and (config.getoption('--run-tasks') or run_all)
+    run_mongo = use_mongo and (config.getoption('--run-mongo') or run_all)
+    if not run_tasks:
         skip_tasks = pytest.mark.skip(
-            reason="need --run-tasks to run"
+            reason="need --run-tasks to run and 'USE_CELERY' enabled to run."
         )
         for item in items:
             if "task" in item.keywords:
                 item.add_marker(skip_tasks)
-    if not config.getoption('--run-mongo') \
-    or not cfg.getenvvar(MODE, 'mongo_use', fallback=True, convert_bool=True):
+    if not run_mongo:
         skip_db_tasks = pytest.mark.skip(
-            reason="need --run-mongo and envvar 'MONGO_USE' enabled to run"
+            reason="need --run-mongo and envvar 'USE_MONGO' enabled to run."
         )
         for item in items:
             if "mongo" in item.keywords:

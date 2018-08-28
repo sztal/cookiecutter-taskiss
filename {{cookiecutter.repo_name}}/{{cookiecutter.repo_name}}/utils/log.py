@@ -4,6 +4,7 @@
 
 import os
 import logging.config
+from logging import getLogger, Logger
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils.path import make_path
 
@@ -16,7 +17,7 @@ def init(root_path):
 
 FORMATTERS = {
     'default': {
-        'format': "[%(asctime)s] %(name)s | %(levelname)s | %(module)s | %(funcName)s | %(message)s",
+        'format': "[%(asctime)s] (@%(process)s|%(thread)s) %(levelname)s | %(pathname)s | %(funcName)s | %(message)s",
         'datefmt': "%Y-%m-%d %H:%M:%S"
     },
     'message': {
@@ -24,6 +25,24 @@ FORMATTERS = {
         'datefmt': "%Y-%m-%d %H:%M:%S"
     }
 }
+
+def get_logger(logger=True):
+    """Get logger.
+
+    Parameters
+    ----------
+    logger : str or bool
+        If `True` then root logger is returned.
+        If *falsy* the `None` is returned.
+        If string then a logger of given name is returned.
+    """
+    if isinstance(logger, Logger):
+        return logger
+    if not logger:
+        return
+    if logger is True:
+        return getLogger()
+    return getLogger(logger)
 
 def make_logging_settings(root_path):
     """Make logging settings dict.

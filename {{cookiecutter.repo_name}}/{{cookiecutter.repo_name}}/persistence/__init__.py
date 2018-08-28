@@ -115,38 +115,6 @@ class BasePersistence(metaclass=Composable):
             safe_print(msg.format(item_name=item_name, n=n, **kwds), nl=False)
         return n
 
-    def log(self, msg, *args, method='info', **kwds):
-        """Log a message.
-
-        Parameters
-        ----------
-        msg : str
-            Message.
-        method :
-            :py:class:`logging.Logger` logging method name.
-        *args :
-            Positional arguments passed to the logging method.
-        **kwds :
-            Keyword arguments passed to the logging method.
-        """
-        if self.logger:
-            logmethod = getattr(self.logger, method)
-            logmethod(msg, *args, **kwds)
-
-    def log_progress(self, msg="Processed {n} {item_name}s"):
-        """Log information about work done.
-
-        Parameters
-        ----------
-        msg : str
-            Message to log.
-            Has to be a formattable string with placeholders `n` and `item_name`.
-        """
-        if not hasattr(self, 'batch_size'):
-            return
-        if self.batch_size and self.batch_size > 0 and self.count % self.batch_size == 0:
-            self.log(msg.format(n=self.count, item_name=self.item_name))
-
 # Disk persistence classes ----------------------------------------------------
 
 class DiskPersistence(BasePersistence):
@@ -244,11 +212,15 @@ class JSONLinesPersistence(DiskPersistence):
             Keyword arguments passed to
             :py:meth:`{{ cookiecutter.repo_name }}.persistence.DiskPersistence.log_progress`.
         """
+        batch_size = getattr(self, 'batch_size', None)
         with open(self.filepath, 'a') as f:
             self.inc(print_num=print_num)
             line = self.dump(doc)
             f.write(line+"\n")
-        self.log_progress()
+            if batch_size and batch_size > 0 and self.count % batch_size == 0 \
+            and self.logger:
+                self.logger.info(f"Processed {batch_size} items ({self.count} in total).")
+
 
     def dump(self, obj):
         """Dump an object to JSON string.
@@ -342,7 +314,8 @@ class DBPersistence(BasePersistence):
         else:
             raise ValueError("'query' is not callable")
         mname = self.get_model_name()
-        self.log(f"Model '{mname}' cleared with result {res}")
+        m = f"Model '{mname}' cleared with result {res}"
+        self.logger.info(m)
         return res
 
     def prepare(self):

@@ -37,13 +37,13 @@ test-quick:
 	py.test
 
 test:
-	py.test --run-tasks --run-mongo
+	py.test --all
 
 test-pylint:
 	py.test --pylint -m pylint
 
 test-all:
-	py.test --pylint --run-tasks --run-mongo
+	py.test --pylint --all
 
 test-tox:
 	tox
