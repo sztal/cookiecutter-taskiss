@@ -13,7 +13,7 @@ from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import log
 from {{ cookiecutter.repo_name }}.utils.path import make_path
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
-from {{ cookiecutter.repo_name }}.persistence.db import mongo
+from {{ cookiecutter.repo_name }}.persistence.db import mongo as mongodb
 from {{ cookiecutter.repo_name }}.persistence.importers import BaseImporter
 from {{ cookiecutter.repo_name }}.persistence import BasePersistence
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractMongoModel
@@ -37,9 +37,9 @@ AbstractPersistence.register(BasePersistence)
 
 log.init(cfg.getenvvar(MODE, 'log_root_dir'))
 logger = getLogger()
-mdb = None
-if cfg.getenvvar('DEV', 'db_use', fallback=True, convert_bool=True):
-    mdb = mongo.init(
+mongo = None
+if cfg.getenvvar('DEV', 'mongo_use', fallback=True, convert_bool=True):
+    mongo = mongodb.init(
         user=cfg.getenvvar(MODE, 'mongo_user'),
         password=cfg.getenvvar(MODE, 'mongo_pass'),
         host=cfg.getenvvar(MODE, 'mongo_host'),
@@ -53,10 +53,10 @@ def exit_handler():
     """Exit handler that handles db logout etc."""
     db = cfg.getenvvar(MODE, 'mongo_db')
     user = cfg.getenvvar(MODE, 'mongo_user')
-    mdb[db].logout()
+    mongo[db].logout()
     logger.info("Log out user '%s' from database '%s'", user, db)
-    mdb.close()
-    logger.info("MongoDB connection closed [%s]", mdb.name)
+    mongo.close()
+    logger.info("MongoDB connection closed [%s]", mongo.name)
 
 # atexit.register(exit_handler)
 

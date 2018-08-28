@@ -58,22 +58,22 @@ def init(user, password, host, port, db, authentication_db=None,
         port=port,
         db=db
     )
-    mdb = connect(uri, authentication_db)
+    mongo = connect(uri, authentication_db)
     if handle_double_auth_error:
         pass
         # try:
-        #     mdb.database_names()
+        #     mongo.database_names()
         # except OperationFailure as exc:
         #     rx = re.compile(
         #         r"Another user is already authenticated to this database",
         #         re.IGNORECASE
         #     )
         #     if rx.search(str(exc)):
-        #         mdb.get_database().logout()
-        #         mdb = connect(uri, authentication_db)
+        #         mongo.get_database().logout()
+        #         mongo = connect(uri, authentication_db)
         # else:
         #     raise exc
-    return mdb
+    return mongo
 
 
 class MongoPersistence(DBPersistence):

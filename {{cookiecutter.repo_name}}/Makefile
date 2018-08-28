@@ -43,7 +43,7 @@ test-pylint:
 	py.test --pylint -m pylint
 
 test-all:
-	py.test --pylint --run-tasks --run-db
+	py.test --pylint --run-tasks --run-mongo
 
 test-tox:
 	tox

@@ -82,7 +82,7 @@ class TestJSONLinesPersistence:
         assert saved_data == data
 
 
-@pytest.mark.db
+@pytest.mark.mongo
 class TestBaseImporterAndMongoPersistence:
     """Test cases for `BaseImporter` and `MongoPersistence`."""
 
@@ -95,7 +95,7 @@ class TestBaseImporterAndMongoPersistence:
         data = [ doc.to_dict() for doc in MongoModel.objects.order_by('views') ]
         assert data == mongo_model_data
 
-@pytest.mark.db
+@pytest.mark.mongo
 class TestJSONLinesImporterWithMongoPersistence:
     """Test cases for `JSONLinesImporter` and `MongoPersistence`."""
 

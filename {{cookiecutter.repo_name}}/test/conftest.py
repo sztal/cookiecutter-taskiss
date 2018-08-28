@@ -23,8 +23,8 @@ def pytest_addoption(parser):
         help="Run task tests."
     )
     parser.addoption(
-        '--run-db', action='store_true', default=True,
-        help="Run database-dependent tests."
+        '--run-mongo', action='store_true', default=True,
+        help="Run tests dependent on MongoDB."
     )
 
 def pytest_collection_modifyitems(config, items):
@@ -37,20 +37,20 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "task" in item.keywords:
                 item.add_marker(skip_tasks)
-    if not config.getoption('--run-db') \
-    or not cfg.getenvvar(MODE, 'db_use', fallback=True, convert_bool=True):
+    if not config.getoption('--run-mongo') \
+    or not cfg.getenvvar(MODE, 'mongo_use', fallback=True, convert_bool=True):
         skip_db_tasks = pytest.mark.skip(
-            reason="nee --run-db and envvar 'DB_USE' enabled to run"
+            reason="need --run-mongo and envvar 'MONGO_USE' enabled to run"
         )
         for item in items:
-            if "db" in item.keywords:
+            if "mongo" in item.keywords:
                 item.add_marker(skip_db_tasks)
 
 # Fixtures --------------------------------------------------------------------
 
 @pytest.fixture(scope='session')
 def celery_config():
-    """Fixture: basic _Celery_ config."""
+    """Fixture: basic *Celery* config."""
     return {
         'broker_url':
             os.environ.get('CELERY_TEST_BROKER_URL', 'pyamqp://'),
@@ -65,7 +65,7 @@ def celery_config():
 
 @pytest.fixture(scope='session')
 def scheduler():
-    """Fixture: _Taskiss_ scheduler object."""
+    """Fixture: *Taskiss* scheduler object."""
     scheduler = Scheduler(include)
     scheduler.get_registered_tasks()
     scheduler.build_dependency_graph()
