@@ -70,14 +70,18 @@ class DBPersistenceInterface(BaseInterface):
         Optional logger object.
     """
     _schema = BaseValidator({
-        'model': { 'coerce': lambda x: get_db_model(x) if isinstance(x, str) else x },
+        'model': {
+            'coerce': lambda x: get_db_model(x) if isinstance(x, str) else x,
+            'nullable': False
+        },
         'query': {},
         'processor': { 'type': 'callable', 'nullable': True, 'default': None },
         'batch_size': { 'type': 'integer', 'coerce': int, 'default': 0 },
         'n_retry': { 'type': 'integer', 'coerce': int, 'default': 2 },
         'backoff_time': { 'type': 'integer', 'coerce': int, 'default': 5 },
         'backoff_base': { 'type': 'number', 'default': 2, 'min': 0 },
-        'logger': { 'type': 'logger', 'nullable': True, 'default': None }
+        'logger': { 'type': 'logger', 'nullable': True, 'default': None },
+        'clear_model': { 'nullable': True, 'default': None }
     })
 
 

@@ -16,7 +16,7 @@ class AbstractDBModelMetaclass(ABCMeta):
     """Abstract database model metaclass."""
     pass
 
-class AbstractDBImporterMetaclass(ABCMeta):
+class AbstractImporterMetaclass(ABCMeta):
     """Abstract database importer metaclass."""
     pass
 
@@ -51,7 +51,7 @@ class AbstractMongoModel(AbstractDBModel):
     """Abstract base class for registering MongoDB model classes."""
     pass
 
-class AbstractDBImporter(metaclass=AbstractDBImporterMetaclass):
+class AbstractImporter(metaclass=AbstractImporterMetaclass):
     """Abstract base class for registering db importers classes."""
     pass
 

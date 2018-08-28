@@ -14,10 +14,10 @@ from {{ cookiecutter.repo_name }}.utils import log
 from {{ cookiecutter.repo_name }}.utils.path import make_path
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
 from {{ cookiecutter.repo_name }}.persistence.db import mongo
-from {{ cookiecutter.repo_name }}.persistence.importers import BaseDBImporter
+from {{ cookiecutter.repo_name }}.persistence.importers import BaseImporter
 from {{ cookiecutter.repo_name }}.persistence import BasePersistence
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractMongoModel
-from {{ cookiecutter.repo_name }}.base.abc import AbstractDBImporter, AbstractPersistence
+from {{ cookiecutter.repo_name }}.base.abc import AbstractImporter, AbstractPersistence
 
 
 __author__ = '{{ cookiecutter.full_name }}'
@@ -30,7 +30,7 @@ AbstractDBConnector.register(MongoClient)
 AbstractMongoModel.register(BaseDocument)
 AbstractMongoModel.register(DocumentMetaclass)
 AbstractMongoModel.register(TopLevelDocumentMetaclass)
-AbstractDBImporter.register(BaseDBImporter)
+AbstractImporter.register(BaseImporter)
 AbstractPersistence.register(BasePersistence)
 
 # Iniitilize application components -------------------------------------------
@@ -58,6 +58,6 @@ def exit_handler():
     mdb.close()
     logger.info("MongoDB connection closed [%s]", mdb.name)
 
-atexit.register(exit_handler)
+# atexit.register(exit_handler)
 
 # -----------------------------------------------------------------------------

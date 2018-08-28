@@ -6,10 +6,12 @@ import pytest
 from datetime import datetime
 from mongoengine import Document
 from mongoengine import ObjectIdField, StringField, IntField, ListField, DateTimeField
+from {{ cookiecutter.repo_name }}.config import ROOT_PATH
 from {{ cookiecutter.repo_name }}.persistence import JSONLinesPersistence
 from {{ cookiecutter.repo_name }}.persistence.db.mongo import MongoPersistence
-from {{ cookiecutter.repo_name }}.persistence.importers import BaseDBImporter
+from {{ cookiecutter.repo_name }}.persistence.importers import BaseImporter
 from {{ cookiecutter.repo_name }}.persistence.db.mongo.mixins import BaseDocumentMixin
+from {{ cookiecutter.repo_name }}.cli.importers.utils import run_importer
 
 
 @pytest.fixture
@@ -54,8 +56,8 @@ def mongo_model_data():
 
 @pytest.fixture(scope='module')
 def importer(MongoModel):
-    """Fixture: JSONLinesDBImporter."""
-    importer = BaseDBImporter(MongoPersistence(
+    """Fixture: JSONLinesImporter."""
+    importer = BaseImporter(MongoPersistence(
         model=MongoModel,
         query='title',
         batch_size=440,
@@ -81,8 +83,8 @@ class TestJSONLinesPersistence:
 
 
 @pytest.mark.db
-class TestBaseDBImporterAndMongoPersistence:
-    """Test cases for `BaseDBImporter` and `MongoPersistence`."""
+class TestBaseImporterAndMongoPersistence:
+    """Test cases for `BaseImporter` and `MongoPersistence`."""
 
     def test_import_and_persist(self, importer, mongo_model_data):
         """Test case for data import and persistence."""
@@ -92,3 +94,22 @@ class TestBaseDBImporterAndMongoPersistence:
         """Test case for MongoDB connection and data validity after persistence."""
         data = [ doc.to_dict() for doc in MongoModel.objects.order_by('views') ]
         assert data == mongo_model_data
+
+@pytest.mark.db
+class TestJSONLinesImporterWithMongoPersistence:
+    """Test cases for `JSONLinesImporter` and `MongoPersistence`."""
+
+    def test_run_importer(self):
+        """Test case via `run_importer` command-line util function."""
+        try:
+            run_importer(
+                importer='JSONLinesImporter',
+                persistence='MongoPersistence',
+                src=os.path.join(ROOT_PATH, 'test', 'data', 'raw', 'example-mongo-model-dump.jl'),
+                model='ExampleMongoModel',
+                query='text',
+                clear_model={},
+                logger=getLogger()
+            )
+        except Exception as exc:
+            pytest.fail(str(exc))

@@ -49,7 +49,7 @@ class BaseValidator(Validator):
             self._error(field, "Must be a proper python object path")
 
 
-class DBImporterValidator(BaseValidator):
+class ImporterValidator(BaseValidator):
     """Database importer schema validator."""
     def __init__(self, *args, allow_unknown=False, purge_unknown=True, **kwds):
         """Initialization method.

@@ -8,7 +8,7 @@ mongoengine
 import os
 import re
 import time
-from collections import Iterable
+from collections import Iterable, Mapping
 from pymongo import UpdateOne, UpdateMany
 from pymongo.errors import OperationFailure
 import mongoengine
@@ -246,14 +246,26 @@ class MongoPersistence(DBPersistence):
 
     def get_model_name(self):
         """Get collection model name."""
-        self.model._get_collection_name()
+        return self.model._get_collection_name()
 
-    def drop_model_data(self, query):
+    def drop_model_data(self, query=None, **kwds):
         """Drop model data.
 
         Parameters
         ----------
-        query : dict
-            Dict representing raw MongoDB query.
+        query : any
+            If callable then it is called on self (and `**kwds`)
+            and the results is returned.
+            If string then it is used as a raw *MongoDB* query.
+        **kwds :
+            Optional keyword arguments passed to either 'query' or
+            'self.clear_model' callable.
         """
-        self.model.objects(__raw__=query).delete()
+        if query is None:
+            query = self.clear_model
+        if isinstance(query, Mapping):
+            _query = query
+            query = lambda self: \
+                self.model.objects(__raw__=_query).delete()
+        super().drop_model_data(query, **kwds)
+

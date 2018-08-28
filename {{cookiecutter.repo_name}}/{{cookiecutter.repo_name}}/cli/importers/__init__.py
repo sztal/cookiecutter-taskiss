@@ -1,14 +1,14 @@
-"""CLI: DB submodule for importing data."""
-from logging import getLogger
+"""CLI: data importers module."""
 import click
 from {{ cookiecutter.repo_name }}.cli.utils import eager_callback, parse_args
-from {{ cookiecutter.repo_name }}.cli.db.utils import show_db_importers, show_db_importer_schema
-from {{ cookiecutter.repo_name }}.utils.fetch import get_persistence, get_db_importer
+from {{ cookiecutter.repo_name }}.cli.importers.utils import show_importers, show_importer_schema
+from {{ cookiecutter.repo_name }}.cli.importers.utils import run_importer
+
 
 
 @click.group()
 @click.option('--show-importers', is_flag=True, default=False, expose_value=False,
-              is_eager=True, callback=eager_callback(show_db_importers))
+              is_eager=True, callback=eager_callback(show_importers))
 def importers():
     """Interface for importing data to databases."""
     pass
@@ -20,7 +20,7 @@ def _(path_or_name):
 
     Main must be a proper python path or a simple class name.
     """
-    show_db_importer_schema(path_or_name)
+    show_importer_schema(path_or_name)
 
 @importers.command(name='import-data', help="Import data to a persistence storage.")
 @click.argument('importer_path_or_name', nargs=1, type=str)
@@ -32,12 +32,4 @@ def _(path_or_name):
 def _(importer_path_or_name, persistence_path_or_name, arg, evalarg):
     """Run importer."""
     kwds = { **parse_args(*arg), **parse_args(*evalarg, eval_args=True) }
-    logger = getLogger('message')
-    persistence = get_persistence(persistence_path_or_name)(**kwds)
-    importer = get_db_importer(importer_path_or_name)(persistence)
-    importer_kwds = importer.schema.validated(kwds)
-    if not kwds:
-        raise ValueError(importer.schema.errors)
-    logger.info("Importing data with %r [%r] to %r [%r]",
-                importer, importer_kwds, persistence, kwds)
-    importer.import_data(**importer_kwds)
+    run_importer(importer_path_or_name, persistence_path_or_name, log=True, **kwds)

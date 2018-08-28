@@ -7,11 +7,11 @@ facilities. They are meant to be composed of
 # pylint: disable=E1101,W0221
 from collections import Mapping
 import json
-from {{ cookiecutter.repo_name }}.base.validators import DBImporterValidator
+from {{ cookiecutter.repo_name }}.base.validators import ImporterValidator
 from {{ cookiecutter.repo_name }}.base.validators import copy_schema
 
 
-class BaseDBImporter:
+class BaseImporter:
     """Data importer base class."""
     _interface = {
         'data': { 'type': 'iterable' },
@@ -40,7 +40,7 @@ class BaseDBImporter:
             cn = cls.__class__.__name__
             raise AttributeError(f"'{cn}' does not define interface")
         elif isinstance(cls._interface, Mapping):
-            cls._interface = DBImporterValidator(cls._interface)
+            cls._interface = ImporterValidator(cls._interface)
         return cls._interface
 
     @property
@@ -65,11 +65,11 @@ class BaseDBImporter:
                 self.persistence.persist(record, print_num=print_num, **kwds)
 
 
-class JSONLinesDBImporter(BaseDBImporter):
+class JSONLinesImporter(BaseImporter):
     """JSON lines data importer."""
     _interface = { **{
         k: v for k, v
-        in copy_schema(BaseDBImporter._interface).items()
+        in copy_schema(BaseImporter._interface).items()
         if k != 'data'
     }, 'src': { 'type': 'string' } }
 

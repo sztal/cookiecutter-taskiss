@@ -39,7 +39,8 @@ def __getattr__(self, attr):
             return getattr(component, attr)
         except AttributeError:
             pass
-    raise AttributeError
+    cn = self.__class__.__name__
+    raise AttributeError(f"'{cn}' does not have attribute '{attr}'")
 
 def getcomponents_(self, clsname=None):
     """Get components dictionary.

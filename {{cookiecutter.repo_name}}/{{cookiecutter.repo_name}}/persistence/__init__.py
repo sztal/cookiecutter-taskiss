@@ -56,7 +56,7 @@ class BasePersistence(metaclass=Composable):
 
     def __enter__(self):
         """Enter hook."""
-        pass
+        self.prepare()
 
     def __exit__(self, type, value, traceback):
         """Exit hook."""
@@ -77,6 +77,10 @@ class BasePersistence(metaclass=Composable):
 
     def finalize(self):
         """Finalize update."""
+        pass
+
+    def prepare(self):
+        """Prepare update."""
         pass
 
     def persist(self):
@@ -126,7 +130,7 @@ class BasePersistence(metaclass=Composable):
             Keyword arguments passed to the logging method.
         """
         if self.logger:
-            logmethod = getattr(self, method)
+            logmethod = getattr(self.logger, method)
             logmethod(msg, *args, **kwds)
 
     def log_progress(self, msg="Processed {n} {item_name}s"):
@@ -309,12 +313,39 @@ class DBPersistence(BasePersistence):
 
     def get_model_name(self):
         """Get model name."""
-        raise NotImplementedError("'{}' does not implement 'get_model_name'".format(
-            self.__class__.__name__
-        ))
+        return str(self.model)
 
-    def drop_model_data(self, *args, **kwds):
-        """Drop model data."""
-        raise NotImplementedError("'{}' does not implement 'drop_model_data'".format(
-            self.__class__.__name__
-        ))
+    def drop_model_data(self, query=None, **kwds):
+        """Drop model data.
+
+        Parameters
+        ----------
+        query : callable
+            If `None` then attribute `clear_model` is used.
+            If callable then it is called on self (and `**kwds`)
+            and the results is returned.
+        **kwds :
+            Optional keyword arguments passed to either 'query' or
+            'self.clear_model' callable.
+
+        Raises
+        ------
+        ValueError
+            If query is not callable.
+        """
+        if query is None:
+            if callable(self.clear_model):
+                res = self.clear_model(self, **kwds)
+            raise ValueError("'query' is not defined")
+        if callable(query):
+            res = query(self, **kwds)
+        else:
+            raise ValueError("'query' is not callable")
+        mname = self.get_model_name()
+        self.log(f"Model '{mname}' cleared with result {res}")
+        return res
+
+    def prepare(self):
+        """Prepare model before update."""
+        if self.clear_model is not None:
+            self.drop_model_data()

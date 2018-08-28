@@ -12,6 +12,7 @@ import {{ cookiecutter.repo_name }}
 from {{ cookiecutter.repo_name }}.cli.tasks import tasks
 from {{ cookiecutter.repo_name }}.cli.db import db
 from {{ cookiecutter.repo_name }}.cli.persistence import persistence
+from {{ cookiecutter.repo_name }}.cli.importers import importers
 
 PACKAGE_NAME = {{ cookiecutter.repo_name }}.__name__
 CONTEXT_SETTINGS = {}
@@ -35,3 +36,4 @@ def cli(debug):
 cli.add_command(tasks)
 cli.add_command(db)
 cli.add_command(persistence)
+cli.add_command(importers)
