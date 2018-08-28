@@ -1,4 +1,4 @@
-"""Custom Celery task classes and decorators."""
+"""Custom *Taskiss-Celery* task classes and decorators."""
 from collections import defaultdict, Mapping
 from logging import getLogger
 from celery import Task
@@ -9,12 +9,12 @@ from {{ cookiecutter.repo_name }}.taskiss.validators import TaskissValidator
 
 
 class TaskissRequest(Request):
-    """_Taskiss_ request class."""
+    """*Taskiss* request class."""
     pass
 
 
 class TaskissTask(Task):
-    """_Taskiss_ task class.
+    """*Taskiss* task class.
 
     This is an extension of the base :py:class:`celery.Task` class
     that restructures incoming arguments to comply to the task
@@ -72,8 +72,8 @@ class TaskissTask(Task):
 
         Notes
         -----
-        Since order of task execution is not guaranteed in _Celery_
-        the _Taskiss_ communication protocol uses key-value pairs
+        Since order of task execution is not guaranteed in *Celery*
+        the *Taskiss* communication protocol uses key-value pairs
         only represented as dictionaries with default value of `None`.
 
         If positional arguments are passed, then they are assigned

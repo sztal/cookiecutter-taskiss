@@ -11,7 +11,7 @@ def mongo():
     """MongoDB / Mongoengine management inteface."""
     pass
 
-@mongo.command(name='schema', help="Show schema of a MongoDB model")
+@mongo.command(name='schema', help="Show schema of a MongoDB model.")
 @click.argument('path_or_name', nargs=1, type=str)
 def _(path_or_name):
     """Show schema of a MongoDB object.

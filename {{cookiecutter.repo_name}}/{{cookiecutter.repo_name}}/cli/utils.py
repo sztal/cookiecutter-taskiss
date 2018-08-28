@@ -27,6 +27,15 @@ def pprint(obj, indent=None):
     else:
         safe_print(obj)
 
+def show_unique(iterator):
+    """Show unique values in an iterator."""
+    shown = []
+    for item in iterator:
+        if item in shown:
+            continue
+        shown.append(item)
+        pprint(item)
+
 def eager_callback(callback, *args, **kwds):
     """Warpper for executing callbacks of eager options.
 

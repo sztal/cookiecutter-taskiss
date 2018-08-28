@@ -11,6 +11,7 @@ import click
 import {{ cookiecutter.repo_name }}
 from {{ cookiecutter.repo_name }}.cli.tasks import tasks
 from {{ cookiecutter.repo_name }}.cli.db import db
+from {{ cookiecutter.repo_name }}.cli.persistence import persistence
 
 PACKAGE_NAME = {{ cookiecutter.repo_name }}.__name__
 CONTEXT_SETTINGS = {}
@@ -33,3 +34,4 @@ def cli(debug):
 
 cli.add_command(tasks)
 cli.add_command(db)
+cli.add_command(persistence)

@@ -15,8 +15,9 @@ from {{ cookiecutter.repo_name }}.utils.path import make_path
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
 from {{ cookiecutter.repo_name }}.persistence.db import mongo
 from {{ cookiecutter.repo_name }}.persistence.importers import BaseDBImporter
+from {{ cookiecutter.repo_name }}.persistence import BasePersistence
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractMongoModel
-from {{ cookiecutter.repo_name }}.base.abc import AbstractDBImporter
+from {{ cookiecutter.repo_name }}.base.abc import AbstractDBImporter, AbstractPersistence
 
 
 __author__ = '{{ cookiecutter.full_name }}'
@@ -30,6 +31,7 @@ AbstractMongoModel.register(BaseDocument)
 AbstractMongoModel.register(DocumentMetaclass)
 AbstractMongoModel.register(TopLevelDocumentMetaclass)
 AbstractDBImporter.register(BaseDBImporter)
+AbstractPersistence.register(BasePersistence)
 
 # Iniitilize application components -------------------------------------------
 

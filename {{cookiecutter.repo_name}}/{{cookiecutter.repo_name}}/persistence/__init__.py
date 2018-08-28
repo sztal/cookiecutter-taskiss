@@ -19,6 +19,7 @@ from {{ cookiecutter.repo_name }}.utils import safe_print
 from {{ cookiecutter.repo_name }}.base.meta import Composable
 from {{ cookiecutter.repo_name }}.base.interface import BaseInterface
 from {{ cookiecutter.repo_name }}.base.interface import DiskPersistenceInterface, DBPersistenceInterface
+from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
 
 
 class BasePersistence(metaclass=Composable):
@@ -60,6 +61,14 @@ class BasePersistence(metaclass=Composable):
     def __exit__(self, type, value, traceback):
         """Exit hook."""
         self.finalize()
+
+    @classmethod
+    def get_schema(cls):
+        """Get schema object."""
+        if cls._interface is None:
+            cn = cls.__class__.__name__
+            raise AttributeError(f"'{cn}' does not define interface")
+        return cls._interface
 
     @property
     def interface(self):

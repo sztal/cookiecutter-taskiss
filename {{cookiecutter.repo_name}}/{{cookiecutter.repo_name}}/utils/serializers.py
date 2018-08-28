@@ -4,6 +4,7 @@ from datetime import datetime, date
 from json import JSONEncoder as _JSONEncoder
 from json import JSONDecoder as _JSONDecoder
 from scrapy import Item
+from cerberus import Validator
 from cerberus.schema import DefinitionSchema
 
 
@@ -19,6 +20,8 @@ class JSONEncoder(_JSONEncoder):
             return o.isoformat()
         if isinstance(o, (Item, DefinitionSchema)):
             return dict(o)
+        if isinstance(o, Validator):
+            return dict(o.schema)
         return super().default(o)
 
 

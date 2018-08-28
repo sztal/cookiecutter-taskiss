@@ -45,16 +45,19 @@ def import_python(path, package=None):
         return getattr(module, obj)
     return module
 
-def is_python_path(path):
+def is_python_path(path, object_only=False):
     """Check if a string is a valid python path.
 
     Parameters
     ----------
     path : str
         String.
+    object_only : bool
+        Should `True` be returned only for object specifying paths.
     """
     m = _rx_pp.match(path)
-    if not m or path.count(':') > 1:
+    n_colons = path.count(':')
+    if not m or n_colons > 1 or (object_only and n_colons != 1):
         return False
     return True
 
