@@ -31,7 +31,7 @@ setup(
     author_email='{{ cookiecutter.email }}',
     url='https://github.com/{{ cookiecutter.github_username }}/{{ cookiecutter.repo_name }}',
     packages=[
-        '{{ cookiecutter.repo_name }}',
+        # '{{ cookiecutter.repo_name }}',
         *find_packages()
     ],
     setup_requires=[

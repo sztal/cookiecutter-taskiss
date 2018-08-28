@@ -37,7 +37,7 @@ test-quick:
 	py.test
 
 test:
-	py.test --run-tasks --run-db
+	py.test --run-tasks --run-mongo
 
 test-pylint:
 	py.test --pylint -m pylint
