@@ -7,6 +7,7 @@ easy adjusting input data to a given model schema.
 from mongoengine.base.fields import BaseField
 from cerberus import Validator
 from {{ cookiecutter.repo_name }}.utils.processors import parse_date, parse_bool
+from {{ cookiecutter.repo_name }}.base.abc import AbstractDBMixin
 
 
 BASESCHEMA = {
@@ -190,3 +191,6 @@ class BaseDocumentMixin:
         fields = [ f for f in self._fields if f not in ignore ]
         dct = { f: getattr(self, f) for f in fields }
         return dct
+
+
+AbstractDBMixin.register(BaseDocumentMixin)

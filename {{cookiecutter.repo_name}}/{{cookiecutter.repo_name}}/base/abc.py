@@ -16,16 +16,20 @@ class AbstractDBModelMetaclass(ABCMeta):
     """Abstract database model metaclass."""
     pass
 
+class AbstractDBMixinMetaclass(ABCMeta):
+    """Abstract database mixin metaclass."""
+    pass
+
+class AbstractMongoModelMetaclass(AbstractDBModelMetaclass):
+    """Abstract *MongoDB* model metaclass."""
+    pass
+
 class AbstractImporterMetaclass(ABCMeta):
     """Abstract database importer metaclass."""
     pass
 
 class AbstractPersistenceMetaclass(ABCMeta):
     """Abstract persistence metaclass."""
-    pass
-
-class AbstractMongoModelMetaclass(AbstractDBModelMetaclass):
-    """Abstract *MongoDB* model metaclass."""
     pass
 
 
@@ -49,6 +53,10 @@ class AbstractDBConnector(metaclass=AbstractDBConnectorMetaclass):
 
 class AbstractDBModel(metaclass=AbstractDBModelMetaclass):
     """Abstract base class for registering database model classes."""
+    pass
+
+class AbstractDBMixin(metaclass=AbstractDBMixinMetaclass):
+    """Abstract base class for registering database mixin classes."""
     pass
 
 class AbstractMongoModel(AbstractDBModel):
