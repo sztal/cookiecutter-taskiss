@@ -1,10 +1,10 @@
 """Test _Scheduler_ class."""
 import pytest
-from {{ cookiecutter.repo_name }}.taskiss.{{ cookiecutter.taskmodule_name }} import cfg
 
 
 @pytest.mark.task
-def test_run_task(scheduler):
+def test_run_task(scheduler, {{ cookiecutter.taskmodule_name }}):
+    cfg = {{ cookiecutter.taskmodule_name }}.cfg
     res = scheduler.run_task(cfg, cfg={
         't1': 10,
         't2': 20,

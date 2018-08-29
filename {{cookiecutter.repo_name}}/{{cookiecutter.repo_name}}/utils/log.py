@@ -6,7 +6,7 @@ import os
 import logging.config
 from logging import getLogger, Logger
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
-from {{ cookiecutter.repo_name }}.utils.path import make_path
+from .path import make_path
 
 
 def init(root_path):

@@ -1,8 +1,8 @@
 """CLI: interface for managing persistence classes."""
 import click
-from {{ cookiecutter.repo_name }}.cli.utils import eager_callback
-from {{ cookiecutter.repo_name }}.cli.persistence.utils import show_persistence
-from {{ cookiecutter.repo_name }}.cli.persistence.utils import show_persistence_schema
+from ..utils import eager_callback
+from .utils import show_persistence
+from .utils import show_persistence_schema
 
 
 @click.group()

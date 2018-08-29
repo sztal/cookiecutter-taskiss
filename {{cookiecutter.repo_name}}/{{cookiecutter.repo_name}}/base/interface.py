@@ -9,8 +9,8 @@ interfaces may be injected into a target object allowing for direct
 argument / attribute access via standard attribute getter.
 """
 from cerberus import Validator
-from {{ cookiecutter.repo_name }}.base.abc import AbstractInterface
-from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
+from .abc import AbstractInterface
+from .validators import BaseValidator
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
 from {{ cookiecutter.repo_name }}.utils.log import get_logger
 

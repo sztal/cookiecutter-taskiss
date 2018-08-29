@@ -1,6 +1,6 @@
 """Utilities for persistence classes command-line interface."""
 from {{ cookiecutter.repo_name }}.utils.fetch import iter_persistence, get_persistence
-from {{ cookiecutter.repo_name }}.cli.utils import pprint, show_unique
+from ..utils import pprint, show_unique
 
 
 def show_persistence():

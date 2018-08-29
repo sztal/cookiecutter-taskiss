@@ -10,7 +10,7 @@
 
 # from scrapy import signals
 from scrapy.exceptions import IgnoreRequest
-from {{ cookiecutter.repo_name }}.webscraping.utils import is_url_in_domains
+from .utils import is_url_in_domains
 
 
 class OffsiteFinalUrlDownloaderMiddleware:

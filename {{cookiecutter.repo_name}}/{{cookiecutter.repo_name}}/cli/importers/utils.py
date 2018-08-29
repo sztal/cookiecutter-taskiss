@@ -1,8 +1,7 @@
 """Utility functions for importers CLI module."""
 from logging import getLogger
-from {{ cookiecutter.repo_name }}.cli.utils import pprint, show_unique
-from {{ cookiecutter.repo_name }}.utils.fetch import iter_importers
-from {{ cookiecutter.repo_name }}.utils.fetch import get_persistence, get_importer
+from ..utils import pprint, show_unique
+from {{ cookiecutter.repo_name }}.utils.fetch import iter_importers, get_persistence, get_importer
 
 
 def show_importers():

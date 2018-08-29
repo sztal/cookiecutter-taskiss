@@ -64,7 +64,7 @@ def is_python_path(path, object_only=False):
         return False
     return True
 
-def iter_objects(path='.', mod_predicate=None, obj_predicate=None, skip_private=True,
+def iter_objects(path='.', obj_predicate=None, mod_predicate=None, skip_private=True,
                  skip_modules=('test', 'tests', 'doc', 'docs')):
     """Iter over all objects with optional predicate based filtering.
 
@@ -74,6 +74,10 @@ def iter_objects(path='.', mod_predicate=None, obj_predicate=None, skip_private=
         Proper python module path.
     mod_predicate : callable or None
         Predicate function for filtering modules.
+        Must take 3 arguments:
+            - :py:class:`importlib.FileFinder` object.
+            - module name
+            - boolean telling it is a package
     obj_predictae : callable or None
         Predicate function for filtering objects.
     skip_private : bool
@@ -82,7 +86,7 @@ def iter_objects(path='.', mod_predicate=None, obj_predicate=None, skip_private=
         List of module names to skip.
     """
     _path = path.replace('.', '', 1) if path.startswith('.') else path
-    for _, name, _ in walk_packages(path):
+    for finder, name, ispkg in walk_packages(path):
         if not name.startswith(_path):
             continue
         path_parts = name.split('.')
@@ -91,7 +95,7 @@ def iter_objects(path='.', mod_predicate=None, obj_predicate=None, skip_private=
                 continue
             if skip_modules and p in skip_modules:
                 continue
-        if mod_predicate and not mod_predicate(name):
+        if mod_predicate and not mod_predicate(finder, name, ispkg):
             continue
         module = import_python(name)
         for _, obj in module.__dict__.items():

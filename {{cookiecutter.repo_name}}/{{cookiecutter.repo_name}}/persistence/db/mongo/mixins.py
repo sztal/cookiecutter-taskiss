@@ -174,7 +174,7 @@ class BaseDocumentMixin:
             return doc
         return cls(**doc)
 
-    def to_dict(self, ignore_fields=True, *args):
+    def to_dict(self, *args, ignore_fields=True, only=()):
         """Dump document object to a dict.
 
         Parameters
@@ -183,12 +183,15 @@ class BaseDocumentMixin:
             Should fields be ignored.
             Ignored fields are defined in `_ignore_fields` class attribute
             and may be extended with additional `*args`.
+        only : list of str
+            Return only selected fields.
         """
-        if ignore_fields:
-            ignore = [ *getattr(self, '_ignore_fields', []), *args ]
+        if only:
+            fields = only
         else:
-            ignore = []
-        fields = [ f for f in self._fields if f not in ignore ]
+            ignore = getattr(self, '_ignore_fields', []) if ignore_fields else []
+            ignore = [ *ignore, *args ]
+            fields = [ f for f in self._fields if f not in ignore ]
         dct = { f: getattr(self, f) for f in fields }
         return dct
 

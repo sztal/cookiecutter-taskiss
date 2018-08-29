@@ -17,6 +17,7 @@ from {{ cookiecutter.repo_name }}.persistence.db import mongo as mongodb
 from {{ cookiecutter.repo_name }}.persistence.importers import BaseImporter
 from {{ cookiecutter.repo_name }}.persistence import BasePersistence
 from {{ cookiecutter.repo_name }}.base.abc import AbstractDBConnector, AbstractMongoModel
+from {{ cookiecutter.repo_name }}.taskiss import Taskiss
 
 
 __author__ = '{{ cookiecutter.full_name }}'
@@ -42,6 +43,12 @@ if cfg.getenvvar(MODE, 'use_mongo', fallback=True, convert_bool=True):
         port=cfg.getenvvar(MODE, 'mongo_port'),
         db=cfg.getenvvar(MODE, 'mongo_db')
     )
+
+taskiss = None
+if cfg.getenvvar(MODE, 'use_celery', fallback=True, convert_bool=True):
+    taskiss = Taskiss('{{cookiecutter.repo_name}}',
+                      config_source='{{cookiecutter.repo_name}}.config.taskiss')
+    taskiss.setup_scheduler()
 
 # Exit hanlders ---------------------------------------------------------------
 

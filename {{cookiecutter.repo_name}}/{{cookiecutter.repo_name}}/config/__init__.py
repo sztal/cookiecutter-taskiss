@@ -16,7 +16,7 @@ from configparser import ConfigParser, ExtendedInterpolation, _UNSET
 
 MODE = os.environ.get('RUNTIME_MODE', 'DEV')
 TOP_PATH = os.path.dirname(__file__)
-ROOT_PATH = os.path.split(TOP_PATH)[0]
+ROOT_PATH = os.path.split(os.path.split(TOP_PATH)[0])[0]
 
 
 class Config(ConfigParser):

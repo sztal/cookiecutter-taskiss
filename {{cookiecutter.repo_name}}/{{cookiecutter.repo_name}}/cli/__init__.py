@@ -8,13 +8,13 @@ click
 """
 import os
 import click
-import {{ cookiecutter.repo_name }}
-from {{ cookiecutter.repo_name }}.cli.tasks import tasks
-from {{ cookiecutter.repo_name }}.cli.db import db
-from {{ cookiecutter.repo_name }}.cli.persistence import persistence
-from {{ cookiecutter.repo_name }}.cli.importers import importers
+from {{ cookiecutter.repo_name }} import __name__
+from .tasks import tasks
+from .db import db
+from .persistence import persistence
+from .importers import importers
 
-PACKAGE_NAME = {{ cookiecutter.repo_name }}.__name__
+PACKAGE_NAME = __name__
 CONTEXT_SETTINGS = {}
 
 @click.group(context_settings=CONTEXT_SETTINGS)

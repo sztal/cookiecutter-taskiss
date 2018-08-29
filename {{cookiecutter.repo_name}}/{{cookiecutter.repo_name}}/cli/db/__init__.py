@@ -1,8 +1,8 @@
 """CLI: database management module."""
 import click
-from {{ cookiecutter.repo_name }}.cli.db.mongo import mongo
-from {{ cookiecutter.repo_name }}.cli.utils import eager_callback
-from {{ cookiecutter.repo_name }}.cli.db.utils import show_db_connectors, show_db_models
+from .mongo import mongo
+from ..utils import eager_callback
+from .utils import show_db_connectors, show_db_models
 
 
 @click.group()

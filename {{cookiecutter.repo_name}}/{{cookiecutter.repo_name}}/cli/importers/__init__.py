@@ -1,8 +1,8 @@
 """CLI: data importers module."""
 import click
-from {{ cookiecutter.repo_name }}.cli.utils import eager_callback, parse_args
-from {{ cookiecutter.repo_name }}.cli.importers.utils import show_importers, show_importer_schema
-from {{ cookiecutter.repo_name }}.cli.importers.utils import run_importer
+from ..utils import eager_callback, parse_args
+from .utils import show_importers, show_importer_schema
+from .utils import run_importer
 
 
 

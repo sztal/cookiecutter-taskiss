@@ -11,7 +11,7 @@ noargs : bool
     Should task be run with immutable signature if chained.
 """
 import time
-from {{ cookiecutter.repo_name }}.taskiss import taskiss
+from {{ cookiecutter.repo_name }} import taskiss
 
 # Set of example tasks with complex dependency graph --------------------------
 

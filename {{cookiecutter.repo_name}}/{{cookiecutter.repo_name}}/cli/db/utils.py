@@ -2,10 +2,23 @@
 from {{ cookiecutter.repo_name }}.utils.fetch import iter_db_connectors, iter_db_models
 from {{ cookiecutter.repo_name }}.utils.fetch import get_db_model, get_importer
 from {{ cookiecutter.repo_name }}.utils.fetch import get_persistence
-from {{ cookiecutter.repo_name }}.cli.utils import pprint, show_unique
+from ..utils import pprint, show_unique
 from {{ cookiecutter.repo_name }}.base.abc import AbstractMongoModel
 
 
+def get_mongo_model(path_or_name, **kwds):
+    """Get a *Mongoengine* model class.
+
+    Parameters
+    ----------
+    path_or_name : str
+        Proper python path or class name.
+    **kwds :
+        Keyword arguments passed to
+        :py:function:`{{ cookiecutter.repo_name }}.utils.fetch.get_db_model`.
+    """
+    return get_db_model(path_or_name,
+                        predicate=lambda x: isinstance(x, AbstractMongoModel), **kwds)
 
 def show_db_connectors():
     """Show registered database connectors."""

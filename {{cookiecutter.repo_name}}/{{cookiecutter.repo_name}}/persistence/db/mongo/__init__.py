@@ -13,10 +13,11 @@ from collections import Iterable, Mapping
 from pymongo import UpdateOne, UpdateMany
 from pymongo.errors import OperationFailure
 import mongoengine
-from {{ cookiecutter.repo_name }}.persistence.db.mongo.utils import update_action_hook, query_factory
-from {{ cookiecutter.repo_name }}.persistence import DBPersistence
+from .utils import update_action_hook, query_factory
+from .interface import MongoPersistenceInterface
+from ....persistence import DBPersistence
 from {{ cookiecutter.repo_name }}.base.interface import DBPersistenceInterface
-from {{ cookiecutter.repo_name }}.persistence.db.mongo.interface import MongoPersistenceInterface
+from {{ cookiecutter.repo_name }}.base.interface import DBPersistenceInterface
 from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
 
 

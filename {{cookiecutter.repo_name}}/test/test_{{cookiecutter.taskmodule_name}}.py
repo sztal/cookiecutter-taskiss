@@ -8,10 +8,6 @@ are avoided, since they do not always work well.
 """
 import os
 import pytest
-from {{ cookiecutter.repo_name }}.taskiss.{{ cookiecutter.taskmodule_name }} import taskiss, t5
-
-if os.environ.get('RUNTIME_MODE', 'DEV').lower() != 'dev':
-    raise ValueError("Non-idempotent tests may be run only with envvar 'RUNTIME_MODE = dev'")
 
 # Unit tests class ------------------------------------------------------------
 
@@ -19,10 +15,9 @@ if os.environ.get('RUNTIME_MODE', 'DEV').lower() != 'dev':
 class TestTasksEndToEnd:
     """End-to-end not-idempotent task tests."""
     timeout = 30
-    taskiss.scheduler.get_registered_tasks()
-    taskiss.scheduler.build_dependency_graph()
 
-    def test_t5(self):
+    def test_t5(self, {{ cookiecutter.taskmodule_name }}):
         """Test case."""
+        t5 = {{ cookiecutter.taskmodule_name}}.t5
         res = t5.delay(x=10, y=10).get(timeout=self.timeout)
         assert res == { 'n': 100 }

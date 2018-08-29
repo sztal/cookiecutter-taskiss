@@ -9,11 +9,13 @@ Tests can also be run within working
 """
 import os
 import pytest
-from {{ cookiecutter.repo_name }} import MODE
-from {{ cookiecutter.repo_name }}.config import cfg
+from {{ cookiecutter.repo_name }} import taskiss
+from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.taskiss.scheduler import Scheduler
-from {{ cookiecutter.repo_name }}.taskiss.config import include
-
+from {{ cookiecutter.repo_name }}.config.taskiss import include
+# Import tasks only if taskiss object is defined
+if taskiss:
+        import {{ cookiecutter.repo_name }}.{{ cookiecutter.taskmodule_name }} as _{{ cookiecutter.taskmodule_name }}
 
 # Custom options --------------------------------------------------------------
 
@@ -57,6 +59,19 @@ def pytest_collection_modifyitems(config, items):
 # Fixtures --------------------------------------------------------------------
 
 @pytest.fixture(scope='session')
+def taskiss():
+    """Fixture: *Taskiss* application object."""
+    if taskiss:
+        taskiss.scheduler.get_registered_tasks()
+        taskiss.scheduler.build_dependency_graph()
+    return taskiss
+
+@pytest.fixture(scope='session')
+def {{ cookiecutter.taskmodule_name }}():
+    """Fixture: *Taskiss* {{ cookiecutter.taskmodule_name }}."""
+    return _{{ cookiecutter.taskmodule_name }}
+
+@pytest.fixture(scope='session')
 def celery_config():
     """Fixture: basic *Celery* config."""
     return {
@@ -78,3 +93,20 @@ def scheduler():
     scheduler.get_registered_tasks()
     scheduler.build_dependency_graph()
     return scheduler
+
+@pytest.fixture(scope='session')
+def mod_predicate():
+    """Fixture: module predicate for handling test when some app parts are disabled."""
+    def _mod_predicate(finder, name, ispkg):
+        """Module predicate function."""
+        celery = cfg.getenvvar(MODE, 'use_celery', fallback=True, convert_bool=True)
+        mongo = cfg.getenvvar(MODE, 'use_mongo', fallback=True, convert_bool=True)
+        if not celery:
+            for dep in include:
+                if name.startswith(dep):
+                    return False
+        mongo_path = '{{ cookiecutter.repo_name }}.persistence.db.mongo'
+        if not mongo and name.startswith(mongo_path):
+            return False
+        return True
+    return _mod_predicate

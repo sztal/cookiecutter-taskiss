@@ -6,8 +6,8 @@ from types import GeneratorType
 from ast import literal_eval
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.cli.exceptions import MalformedArgumentError, RepeatedArgumentError
 from {{ cookiecutter.repo_name }}.utils.serializers import UniversalJSONEncoder
+from .exceptions import MalformedArgumentError, RepeatedArgumentError
 
 
 def pprint(obj, indent=None):
@@ -59,7 +59,7 @@ def eager_callback(callback, *args, **kwds):
         ctx.exit()
     return callback_wrapper
 
-def to_console(obj, unique=False):
+def to_console(obj, unique=False, processor=None, **kwds):
     """Print object to the console.
 
     Parameters
@@ -70,29 +70,34 @@ def to_console(obj, unique=False):
         Iterables within iterables are printed as is.
     unique : bool
         Should duplicated objects be shown only once.
+    processor : func or None
+        Optional processing function to call on each object.
+    **kwds :
+        Keyword arguments passed to the processor function.
     """
     if isinstance(obj, str) or not isinstance(obj, (Sequence, GeneratorType)):
         obj = [obj]
     if unique:
         show_unique(obj)
     for o in obj:
+        if processor:
+            o = processor(o, **kwds)
         pprint(o)
 
-def parse_args(*args, eval_args=False, repeated=False):
+def parse_args(*args, parser=None, repeated=False):
     """Parse command-line arguments.
 
     Parameters
     ----------
     *args :
         Sequence of arguments provided as string of form 'key=value'.
-    eval_args : bool
-        If `eval_args=True` then value are first evaluated as literal python
-        code using safe evaluation implemented in
-        :py:function:`ast.literal_eval`.
+    parser : { None, 'eval', 'json' }
+        If `None` the values remain ordinary strings.
+        If `eval` then :py:function:`ast.literal_eval` is called on values.
+        If `json` then :py:meth:`json.loads` is used to parse the values.
     repeated : bool
         Should repeated arguments be allowed.
         Note that in this case all keys' values are represented as lists.
-        In fact, a `defaultdict(list)` is returned.
     """
     kwds = defaultdict(list) if repeated else {}
     for arg in args:
@@ -100,15 +105,17 @@ def parse_args(*args, eval_args=False, repeated=False):
             key, value = arg.split("=")
         except ValueError:
             raise MalformedArgumentError.from_arg(arg)
-        if eval_args:
-            try:
+        try:
+            if parser == 'json':
+                value = json.loads(value)
+            elif parser == 'eval':
                 value = literal_eval(value)
-            except (ValueError, TypeError):
-                raise MalformedArgumentError.from_arg(arg)
+        except (ValueError, TypeError):
+            raise MalformedArgumentError.from_arg(arg)
         if repeated:
             kwds[key].append(value)
         else:
             if key in kwds:
                 raise RepeatedArgumentError.from_arg(key, [ kwds[key], value ])
             kwds[key] = value
-    return kwds
+    return dict(kwds)

@@ -1,9 +1,9 @@
 """CLI: task runner (Taskiss) module."""
 import click
 from celery.result import AsyncResult
-from {{ cookiecutter.repo_name }}.taskiss import taskiss as ts
+from {{ cookiecutter.repo_name }} import taskiss as ts
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.cli.utils import to_console, parse_args
+from ..utils import to_console, parse_args
 
 
 @click.group()
@@ -75,13 +75,14 @@ def _(task, labels):
               help="Number of seconds to wait after each run of the event loop.")
 @click.option('--arg', '-a', type=str, multiple=True,
               help="Args passed to the task (i.e. -a x=10).")
-@click.option('--evalarg', '-e', type=str, multiple=True,
-              help="Literal evaluated args passed to the task (i.e. -e x=['a']).")
+@click.option('--parg', '-p', type=str, multiple=True,
+              help="Parsed args passed to the task (i.e. -e x=['a']).")
 @click.option('--get', '-g', type=int, required=False,
               help="Wait for given time to evaluate async results of the root task.")
-def _(task, recursive, timeout, wait, arg, evalarg, get):
+@click.option('--argparser', type=str, required=False, default='json')
+def _(task, recursive, timeout, wait, arg, evalarg, get, argparser):
     """Run task."""
-    kwds = { **parse_args(*arg), **parse_args(*evalarg, eval_args=True) }
+    kwds = { **parse_args(*arg), **parse_args(*parg, parser=argparser) }
     queue = ts.scheduler.run_task(
         task=task,
         timeout=timeout,

@@ -12,8 +12,6 @@ from {{ cookiecutter.repo_name }}.base.abc import AbstractInterface
 @pytest.mark.parametrize('path,package,exp', [
     ('{{ cookiecutter.repo_name }}', None, {{ cookiecutter.repo_name }}),
     ('{{ cookiecutter.repo_name }}.config:cfg', None, cfg.cfg),
-    ('{{ cookiecutter.repo_name }}.taskiss', None, {{ cookiecutter.repo_name }}.taskiss),
-    ('{{ cookiecutter.repo_name }}.taskiss:taskiss', None, {{ cookiecutter.repo_name }}.taskiss.taskiss),
     ('.path', '{{ cookiecutter.repo_name }}.utils', path),
     ('.path:is_file', '{{ cookiecutter.repo_name }}.utils', path.is_file)
 
@@ -27,12 +25,12 @@ def test_import_python(path, package, exp):
 obj_predicate1 = lambda x: isinstance(x, type) and issubclass(x, BaseImporter)
 obj_predicate2 = lambda x: isinstance(x, type) and issubclass(x, AbstractInterface)
 
-@pytest.mark.parametrize('path,mod_predicate,obj_predicate', [
-    ('{{ cookiecutter.repo_name }}.persistence', None, obj_predicate1),
-    ('{{ cookiecutter.repo_name }}', None, AbstractInterface)
+@pytest.mark.parametrize('path,obj_predicate', [
+    ('{{ cookiecutter.repo_name }}.persistence', obj_predicate1),
+    ('{{ cookiecutter.repo_name }}', AbstractInterface)
 ])
-def test_iter_objects(path, mod_predicate, obj_predicate):
+def test_iter_objects(path, obj_predicate, mod_predicate):
     """Test cases for `iter_objects`."""
-    objects = iter_objects(path, mod_predicate, obj_predicate)
+    objects = iter_objects(path, obj_predicate, mod_predicate=mod_predicate)
     for obj in objects:
         assert obj_predicate(obj)

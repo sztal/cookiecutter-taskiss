@@ -3,9 +3,9 @@ from collections import defaultdict, Mapping
 from logging import getLogger
 from celery import Task
 from celery.worker.request import Request
-from {{ cookiecutter.repo_name }}.taskiss.utils import merge_results
-from {{ cookiecutter.repo_name }}.taskiss.exceptions import BadTaskArgumentsError
-from {{ cookiecutter.repo_name }}.taskiss.validators import TaskissValidator
+from .utils import merge_results
+from .exceptions import BadTaskArgumentsError
+from .validators import TaskissValidator
 
 
 class TaskissRequest(Request):

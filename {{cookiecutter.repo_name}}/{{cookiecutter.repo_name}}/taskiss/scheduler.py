@@ -18,11 +18,9 @@ from networkx import DiGraph, draw_shell
 from networkx.algorithms import is_directed_acyclic_graph, simple_cycles
 from networkx.algorithms import descendants, topological_sort
 import matplotlib.pyplot as pyplot
-from {{ cookiecutter.repo_name }}.taskiss.utils import merge_results
-from {{ cookiecutter.repo_name }}.taskiss.exceptions import CircularDependenciesError
-from {{ cookiecutter.repo_name }}.taskiss.exceptions import NonExistentTaskDependencyError
-from {{ cookiecutter.repo_name }}.taskiss.exceptions import AmbiguousTaskNameError
-from {{ cookiecutter.repo_name }}.taskiss.exceptions import TaskNotRegisteredError
+from .utils import merge_results
+from .exceptions import CircularDependenciesError, NonExistentTaskDependencyError
+from .exceptions import AmbiguousTaskNameError, TaskNotRegisteredError
 
 
 class Scheduler(object):

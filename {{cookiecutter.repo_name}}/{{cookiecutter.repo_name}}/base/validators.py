@@ -2,9 +2,9 @@
 from collections.abc import Callable
 from collections import Iterable, Sequence, Mapping
 from logging import Logger
-from mongoengine.base import BaseDocument, DocumentMetaclass, TopLevelDocumentMetaclass
 from cerberus import Validator, TypeDefinition
 from {{ cookiecutter.repo_name }}.utils import is_python_path
+from {{ cookiecutter.repo_name }}.base.abc import AbstractMongoModel
 
 
 def copy_schema(schema):
@@ -20,11 +20,7 @@ class BaseValidator(Validator):
     types_mapping['callable'] = TypeDefinition('callable', (Callable,), ())
     types_mapping['logger'] = TypeDefinition('logger', (Logger,), ())
     types_mapping['mongoengine_model'] = \
-        TypeDefinition('mongoengine_model', (
-            BaseDocument,
-            DocumentMetaclass,
-            TopLevelDocumentMetaclass
-        ), ())
+        TypeDefinition('mongoengine_model', (AbstractMongoModel,), ())
     types_mapping['iterable'] = TypeDefinition('iterable', (Iterable), ())
     types_mapping['sequence'] = TypeDefinition('sequence', (Sequence,), ())
     types_mapping['mapping'] = TypeDefinition('mapping', (Mapping,), ())
