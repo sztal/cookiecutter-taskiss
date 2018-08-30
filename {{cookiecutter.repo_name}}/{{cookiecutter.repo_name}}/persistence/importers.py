@@ -4,18 +4,32 @@ Importers are helper objects responsible for importing data to various storage
 facilities. They are meant to be composed of
 :py:module:`{{ cookiecutter.repo_name }}.persistence` objects.
 """
-# pylint: disable=E1101,W0221
+# pylint: disable-all
 from collections import Mapping
 import json
-from {{ cookiecutter.repo_name }}.base.validators import ImporterValidator
 from {{ cookiecutter.repo_name }}.base.validators import copy_schema
-from {{ cookiecutter.repo_name }}.base.abc import AbstractImporter
+from {{ cookiecutter.repo_name }}.base.abc import AbstractImporterMetaclass
+from {{ cookiecutter.repo_name }}.base.validators import ImporterValidator
 
 
-class BaseImporter(AbstractImporter):
+class BaseImporterMetaclass(AbstractImporterMetaclass):
+    """Base importer metaclass providing 'schema' class property."""
+
+    @property
+    def schema(cls):
+        """Schema getter."""
+        cn = cls.__name__
+        if not getattr(cls, '_schema', None):
+            raise Attribute(f"'{cn}' does not define 'schema' attribute")
+        if isinstance(cls._schema, dict):
+            cls._schema = ImporterValidator(cls._schema)
+        return cls._schema
+
+
+class BaseImporter(metaclass=BaseImporterMetaclass):
     """Data importer base class."""
-    _interface = {
-        'data': { 'type': 'iterable' },
+    _schema =  {
+        'source': { 'type': 'sequence', 'nullable': False },
         'print_num': {
             'type': 'boolean',
             'default': True
@@ -34,27 +48,17 @@ class BaseImporter(AbstractImporter):
         """
         self.persistence = persistence
 
-    @classmethod
-    def get_schema(cls):
-        """Get schema object."""
-        if cls._interface is None:
-            cn = cls.__class__.__name__
-            raise AttributeError(f"'{cn}' does not define interface")
-        elif isinstance(cls._interface, Mapping):
-            cls._interface = ImporterValidator(cls._interface)
-        return cls._interface
-
     @property
     def schema(self):
         """Schema getter."""
-        return self.get_schema()
+        return self.__class__.schema
 
-    def import_data(self, data, print_num=True, **kwds):
+    def import_data(self, source, print_num=True, **kwds):
         """Import data function.
 
         Parameters
         ----------
-        data : iterable
+        source : sequence
             Sequence of data records to import.
         print_num : bool
             Should number of processed documents be printed.
@@ -62,17 +66,16 @@ class BaseImporter(AbstractImporter):
             Other arguments passed to `persist` method.
         """
         with self.persistence:
-            for record in data:
+            for record in source:
                 self.persistence.persist(record, print_num=print_num, **kwds)
 
 
 class JSONLinesImporter(BaseImporter):
     """JSON lines data importer."""
-    _interface = { **{
-        k: v for k, v
-        in copy_schema(BaseImporter._interface).items()
-        if k != 'data'
-    }, 'src': { 'type': 'string' } }
+    interface = {
+        **BaseImporter.schema.schema,
+        'source': { 'type': 'string', 'nullable': False }
+    }
 
     def read_data(self, src):
         """Read JSON lines file and import to a storage facility.
@@ -104,15 +107,15 @@ class JSONLinesImporter(BaseImporter):
                 data = json.loads(line.strip())
                 yield data
 
-    def import_data(self, src, print_num=True, **kwds):
+    def import_data(self, source, print_num=True, **kwds):
         """Import data method.
 
         Parameters
         ----------
-        src : str
+        source : str
             Path to the data source.
         **kwds :
             Other arguments passed to `persist` method.
         """
-        data = self.read_data(src)
+        data = self.read_data(source)
         super().import_data(data, print_num=print_num, **kwds)

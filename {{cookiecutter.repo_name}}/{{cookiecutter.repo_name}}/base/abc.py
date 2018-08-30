@@ -26,25 +26,21 @@ class AbstractMongoModelMetaclass(AbstractDBModelMetaclass):
 
 class AbstractImporterMetaclass(ABCMeta):
     """Abstract database importer metaclass."""
-    pass
-
-class AbstractPersistenceMetaclass(ABCMeta):
-    """Abstract persistence metaclass."""
-    pass
-
-
-# Abstract classes ------------------------------------------------------------
-
-class AbstractInterface(metaclass=AbstractInterfaceMetaclass):
-    """Abstract base class for settings objects."""
-    _schema = None
-
     @property
     @abstractmethod
-    def schema(self):
+    def schema(cls):
         """Schema getter."""
         pass
 
+class AbstractPersistenceMetaclass(ABCMeta):
+    """Abstract persistence metaclass."""
+    @property
+    @abstractmethod
+    def schema(cls):
+        """Schema getter."""
+        pass
+
+# Abstract classes ------------------------------------------------------------
 
 class AbstractDBConnector(metaclass=AbstractDBConnectorMetaclass):
     """Abstract base class for registering database connection objects."""
@@ -61,10 +57,6 @@ class AbstractDBMixin(metaclass=AbstractDBMixinMetaclass):
 
 class AbstractMongoModel(AbstractDBModel):
     """Abstract base class for registering MongoDB model classes."""
-    pass
-
-class AbstractImporter(metaclass=AbstractImporterMetaclass):
-    """Abstract base class for registering db importers classes."""
     pass
 
 class AbstractPersistence(metaclass=AbstractPersistenceMetaclass):

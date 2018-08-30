@@ -42,16 +42,16 @@ class ScrapyCLIExtraArgsInterface(BaseInterface):
         },
         'mode': {
             'type': 'string',
-            'allowed': [ 'debug' ],
+            'allowed': [ 'debug', None ],
             'nullable': True,
-            'coerce': lambda x: str(x).lower()
+            'coerce': lambda x: str(x).lower() if x else x
         },
         'storage': {
             'type': 'string',
-            'allowed': [ 'all', 'nodb', 'no' ],
+            'allowed': [ 'all', 'nodb', 'no', None ],
             'nullable': True,
             'default': None,
-            'coerce': lambda x: str(x).lower()
+            'coerce': lambda x: str(x).lower() if x else x
         },
         'overwrite': {
             'type': 'boolean',

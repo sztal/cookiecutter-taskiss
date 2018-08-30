@@ -11,12 +11,15 @@ import os
 import pytest
 from click.testing import CliRunner
 from scrapy import Item, Field
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
 from scrapy.loader.processors import MapCompose
 from {{ cookiecutter.repo_name }} import taskiss
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.taskiss.scheduler import Scheduler
 from {{ cookiecutter.repo_name }}.config.taskiss import include
 from {{ cookiecutter.repo_name }}.webscraping.itemcls import BaseItemLoader
+from {{ cookiecutter.repo_name }}.webscraping.spidercls import BaseSpider
 # Import tasks only if taskiss object is defined
 if taskiss:
         import {{ cookiecutter.repo_name }}.tasks as _tasks
@@ -185,3 +188,37 @@ def item_loader():
         content_out = MapCompose()
 
     return TestItemLoader
+
+@pytest.fixture(scope='session')
+def crawler_process():
+    """Fixture: *Scrapy* crawler process."""
+    crawler_process = CrawlerProcess(get_project_settings())
+    return crawler_process
+
+@pytest.fixture(scope='session')
+def google_spider():
+    """Fixture: test spider extracting content from the main page of *Google*."""
+    class GoogleItem(Item):
+        """Google item class."""
+        name = Field()
+
+    class GoogleItemLoader(BaseItemLoader):
+        """Google item loader class."""
+        default_item_class = GoogleItem
+        container_sel = ('div#main', 'css')
+        name_sel = ('center > div > img::attr(alt)', 'css')
+
+    class GoogleSpider(BaseSpider):
+        """Google spider."""
+        name = 'google'
+        start_urls = ['www.google.com']
+        allowed_domains = ['google.com']
+        data = []
+
+        def parse(self, response):
+            """Parse method."""
+            item = super().parse(responses)
+            self.data.append(item)
+            return item
+
+    return GoogleSpider

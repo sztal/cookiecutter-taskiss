@@ -105,7 +105,7 @@ class TestJSONLinesImporterWithMongoPersistence:
             run_importer(
                 importer='JSONLinesImporter',
                 persistence='MongoPersistence',
-                src=os.path.join(ROOT_PATH, 'test', 'data', 'raw', 'example-mongo-model-dump.jl'),
+                source=os.path.join(ROOT_PATH, 'test', 'data', 'raw', 'example-mongo-model-dump.jl'),
                 model='ExampleMongoModel',
                 query='text',
                 clear_model={},

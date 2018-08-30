@@ -9,13 +9,28 @@ interfaces may be injected into a target object allowing for direct
 argument / attribute access via standard attribute getter.
 """
 from cerberus import Validator
-from .abc import AbstractInterface
-from .validators import BaseValidator
-from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
 from {{ cookiecutter.repo_name }}.utils.log import get_logger
+from {{ cookiecutter.repo_name }}.utils.fetch import get_db_model
+from .abc import AbstractInterfaceMetaclass
+from .validators import BaseValidator
 
 
-class BaseInterface(AbstractInterface):
+class BaseInterfaceMetaclass(AbstractInterfaceMetaclass):
+    """Base interface metaclass providing 'schema' class property."""
+
+    @property
+    def schema(cls):
+        """Schema getter."""
+        schema = getattr(cls, '_schema', None)
+        clsnm = cls.__name__
+        if not schema:
+            raise AttributeError(f"'{clsnm}' must implement 'schema' interface")
+        if not isinstance(schema, Validator):
+            msg = f"'{clsnm}' must implement 'schema' interface as 'cerberus.Validator' object"
+            raise TypeError(msg)
+        return schema
+
+class BaseInterface(metaclass=BaseInterfaceMetaclass):
     """Base settings class.
 
     Attributes
@@ -40,6 +55,7 @@ class BaseInterface(AbstractInterface):
     --------
     cerberus
     """
+    _schema = None
     _allow_default = False
     _defaultvalue = None
 
@@ -67,14 +83,7 @@ class BaseInterface(AbstractInterface):
     @property
     def schema(self):
         """Schema getter."""
-        nm = self.__class__.__name__
-        if self._schema is None:
-            raise AttributeError(f"'{nm}' must implement 'schema' interface")
-        if not isinstance(self._schema, Validator):
-            msg = f"'{nm}' must implement 'schema' interface as 'cerberus.Validator' object"
-            raise TypeError(msg)
-        return self._schema
-
+        return self.__class__.schema
 
 class DiskPersistenceInterface(BaseInterface):
     """API interface object for
@@ -107,8 +116,8 @@ class DiskPersistenceInterface(BaseInterface):
 
 
 class DBPersistenceInterface(BaseInterface):
-    """Configuration object for
-    :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistence` objects.
+    """Interface class for
+    :py:class:`{{ cookiecutter.repo_name }}.persistence.DBPersistence`.
 
     Attributes
     ----------

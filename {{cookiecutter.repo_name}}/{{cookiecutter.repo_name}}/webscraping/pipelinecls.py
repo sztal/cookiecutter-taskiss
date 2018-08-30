@@ -45,7 +45,7 @@ class BaseSpiderItemPipeline(metaclass=Composable):
             self.setattribute_('filename', spider.name+'-{}.jl')
         self.disk_persistence._set_attributes(filename=self.filename)
         # Remove source data if `overwrite` mode is on
-        if spider.overwrite:
+        if spider.args.overwrite:
             self.overwrite_storage(spider)
 
     def overwrite_storage(self, spider):
@@ -56,12 +56,12 @@ class BaseSpiderItemPipeline(metaclass=Composable):
 
     def process_item(self, item, spider):
         """Item processing hook."""
-        if spider.storage is None or spider.storage != 'no':
+        if spider.args.storage is None or spider.args.storage != 'no':
             self.disk_persistence.persist(item, print_num=False)
 
     def close_spider(self, spider):
         """Pipeline closing hook."""
-        if spider.storage is None:
+        if spider.args.storage is None or spider.args.storage == 'all':
             with open(self.disk_persistence.filepath, 'r') as f:
                 with self.db_persistence:
                     for line in f:

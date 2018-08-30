@@ -1,12 +1,13 @@
 """Spider base and component classes."""
 # pylint: disable=E1101,W0221,W0223
 import json
-import pdb
 import hashlib
 from logging import getLogger
-from scrapy import Spider, Request
+from scrapy import Request
+from scrapy.spiders import CrawlSpider
 from scrapy.http import HtmlResponse
 from scrapy_splash import SplashRequest, SplashJsonResponse
+from scrapy.shell import inspect_response
 from w3lib.url import canonicalize_url
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
@@ -14,7 +15,7 @@ from .interface import ScrapyCLIExtraArgsInterface
 from .settings import HASHING_SALT, LOGGER_NAME
 
 
-class BaseSpider(Spider):
+class BaseSpider(CrawlSpider):
     """Base spider class.
 
     It defines default methods and class attributes,
@@ -39,11 +40,13 @@ class BaseSpider(Spider):
         If it is `no` then no persistence is used.
         Other values raise `ValueError`.
     allowed_domains : list of str
-        This is a standard `scrapy` spider class attribute, but it is documented
-        here as it has an additional meaning: the provided domains are used
-        to filter out also starting responses (those generated from `start_urls`)
-        if their final URLs (after redirects etc.) are not in the specified
-        domains.
+        This is a standard :py:module:`scrapy` spider class attribute,
+        but it is documented here as it has an additional meaning:
+        the provided domains are used to filter out also starting responses
+        (those generated from `start_urls`) if their final URLs
+        (after redirects etc.) are not in the specified domains.
+    rules : list or tuple
+        Documented in :py:class:`scrapy.spiders.CrawlSpider`.
     start_urls_allowed_domains : list of str
         List of accepted domains used for filtering the `start_urls`.
         This is useful when one want to give a lot of start URLs and make
@@ -75,14 +78,13 @@ class BaseSpider(Spider):
     test_url = None
     hashing_salt = HASHING_SALT
 
+    item_loader = None
+    rules = ()
+
     logger = getLogger(LOGGER_NAME) if LOGGER_NAME else getLogger()
 
     # Spider-level scrapy settings
-    custom_settings = {
-        'ITEM_PIPELINES': {
-            'smcore.web.pipelinecls.BaseSpiderItemPipeline': 300
-        }
-    }
+    custom_settings = {}
 
     # Methods -----------------------------------------------------------------
 
@@ -116,6 +118,7 @@ class BaseSpider(Spider):
 
     def start_requests(self):
         """Generate start requests."""
+        import pdb; pdb.set_trace()
         self.parse_extra_args()
         if self.test_url:
             urls = [ (self.test_url, { 'url': self.test_url }) ]
@@ -149,7 +152,7 @@ class BaseSpider(Spider):
 
     def parse_item(self, response):
         """Default item parsing method."""
-        if not self.item_loader:
+        if not getattr(self, 'item_loader', None):
             cn = self.__class__.__name__
             raise AttributeError(f"'{cn}' must define 'item_loader' class attribute")
         data = response.meta.get('data', {})
@@ -162,9 +165,10 @@ class BaseSpider(Spider):
 
     def parse(self, response):
         """Default response parsing method."""
+        import pdb; pdb.set_trace()
         item = self.parse_item(response)
-        if self.mode and self.mode == 'debug':
-            pdb.set_trace()
+        if self.args.mode and self.args.mode == 'debug':
+            inspect_response(response, self)
         self.logger.debug("Spider '%s' parsed item from %s: %r",
                           spider.name, response.url, item)
         return item

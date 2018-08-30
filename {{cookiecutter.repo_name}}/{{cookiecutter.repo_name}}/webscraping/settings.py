@@ -13,7 +13,7 @@ from {{ cookiecutter.repo_name }}.config import cfg, MODE
 BOT_NAME = '{{ cookiecutter.repo_name }}'
 
 HASHING_SALT = cfg.get(MODE, 'web_user_salt')
-LOGGER_NAME = 'scrappy'
+LOGGER_NAME = 'scrapy'
 
 SPIDER_MODULES = ['{{ cookiecutter.repo_name }}.webscraping.spiders']
 NEWSPIDER_MODULE = '{{ cookiecutter.repo_name }}.webscraping.spiders'
