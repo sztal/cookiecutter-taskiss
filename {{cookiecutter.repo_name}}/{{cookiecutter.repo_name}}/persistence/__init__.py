@@ -2,49 +2,91 @@
 
 The aim is to inject persistence functionalities into classes
 for data collection and/or long computations.
+
+Attributes
+----------
 """
 # pylint: disable=W0613,W0221,W0212
 import os
 import json
-from collections import deque, namedtuple
+from collections import deque
 from logging import getLogger
 from itertools import count
-from {{ cookiecutter.repo_name }}.utils.path import get_persistence_path, make_path, make_filepath
-from {{ cookiecutter.repo_name }}.persistence.mongo.utils import make_bulk_update, action_hook_set
+from {{ cookiecutter.repo_name }}.utils.app import get_persistence_path
+from {{ cookiecutter.repo_name }}.utils.path import make_path, make_filepath
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from {{ cookiecutter.repo_name }}.persistence.abc import AbstractPersistence
+from {{ cookiecutter.repo_name }}.base.meta import Composable
+from {{ cookiecutter.repo_name }}.base.interface import DiskPersistenceInterface, DBPersistenceInterface
+from {{ cookiecutter.repo_name }}.base.validators import BaseValidator
+from {{ cookiecutter.repo_name }}.base.abc import AbstractPersistenceMetaclass
 
 
-ConfigPersistencePath = namedtuple('ConfigPersistencePath', ['persistence_path'])
+class AbstractComposablePersistenceMetaclass(AbstractPersistenceMetaclass, Composable):
+    """Composable persistence abstract metaclass."""
+    pass
 
 
-class BasePersistence(AbstractPersistence):
+class BasePersistence(metaclass=AbstractComposablePersistenceMetaclass):
     """Base persistence class.
 
     It defines the main persistence interface which is the `persist` method.
 
     Attributes
     ----------
+    settings : object
+        Persistence settings.
     item_name : str
         Name of the items being processed.
     """
-    def __init__(self, item_name='item'):
-        """Initilization method."""
+    _interface = None
+
+    def __init__(self, item_name='item', **kwds):
+        """Initilization method.
+
+        Parameters
+        ----------
+        item_name : str
+            Item name.
+        **kwds :
+            Keyword arguments passed to the constructor of the
+            settings interface.
+        """
+        settings = self.interface(**kwds)
+        self.setcomponents_([ ('settings', settings) ])
         self._counter = count(start=1)
         self._count = 0
-        self._cfg = ConfigPersistencePath(get_persistence_path())
         self.item_name = item_name
+        self.queue = deque()
+
+    def __enter__(self):
+        """Enter hook."""
+        self.prepare()
+
+    def __exit__(self, type, value, traceback):
+        """Exit hook."""
+        self.finalize()
+
+    @property
+    def interface(self):
+        """Interface getter."""
+        if not self._interface:
+            cn = self.__class__.__name__
+            raise AttributeError(f"'{cn}' does not define interface")
+        return self._interface
 
     @property
     def count(self):
         """Count of processed items getter."""
         return self._count
 
-    @property
-    def cfg(self):
-        """Get persistence config."""
-        return self._cfg
+    def finalize(self):
+        """Finalize update."""
+        pass
+
+    def prepare(self):
+        """Prepare update."""
+        pass
 
     def persist(self):
         """Persist an object."""
@@ -71,13 +113,14 @@ class BasePersistence(AbstractPersistence):
         **kwds :
             Optional keyword arguments used to format the message string.
         """
-        item_name = item_name if item_name is None else self.item_name
+        item_name = item_name if item_name else self.item_name
         n = next(self._counter)
         self._count = n
         if print_num and n > 1:
-            safe_print(msg.format(tem_name=item_name, n=n, **kwds))
+            safe_print(msg.format(item_name=item_name, n=n, **kwds), nl=False)
         return n
 
+# Disk persistence classes ----------------------------------------------------
 
 class DiskPersistence(BasePersistence):
     """Disk persistence component class.
@@ -85,23 +128,20 @@ class DiskPersistence(BasePersistence):
     This is a base class (does not define proper `persist` method)
     used as a core for concrete peristence classes that write to disk.
     """
-    def __init__(self, filename, dirpath=None, item_name='item', **kwds):
+    _interface = DiskPersistenceInterface
+
+    def __init__(self, item_name='item', **kwds):
         """Initialization method.
 
-        Attributes
+        Parameters
         ----------
-        filename : str
-            Filename format string.
-            Should have '{}' in place of persistence file number.
-        dirpath : str
-            Path to persistence storage directory.
+        item_name : str
+            Item name.
         **kwds :
-            Parameters passed to `get_persistence_path`.
+            Settings passed to `DiskPersistenceSettings` constructor
         """
-        super().__init__(item_name)
+        super().__init__(item_name, **kwds)
         self._filepath = None
-        self.filename = filename
-        self.dirpath = dirpath if dirpath else self.cfg.persistence_path
 
     @property
     def filepath(self):
@@ -144,28 +184,27 @@ class DiskPersistence(BasePersistence):
 
 class JSONLinesPersistence(DiskPersistence):
     """JSON lines disk persitence component class."""
-    def __init__(self, filename, dirpath=None, json_serializer=JSONEncoder,
-                 item_name='item', **kwds):
+
+    def __init__(self, json_serializer=JSONEncoder, item_name='item', **kwds):
         """Initialization method.
 
         Parameters
         ----------
-        filename : str
-            Filename format string.
-            Should have '{}' in place of persistence file number.
-        dirpath : str
-            Path to persistence storage directory.
         json_serializer : json.JSONEncoder
             :py:class:`json.JSONEncoder` subclass defining JSON serializer.
             Defaults to
             :py:class:`{{ cookiecutter.repo_name }}.utils.serializers.JSONEncoder`.
+        item_name : str
+            Item name.
         **kwds :
-            Parameters passed to `get_persistence_path`.
+            Other arguments passed to
+            :py:class:`{{ cookiecutter.repo_name }}.base.interface.DiskPersistenceInteface`
+            when `settings=None`.
         """
-        super().__init__(filename, dirpath, item_name, **kwds)
+        super().__init__(item_name, **kwds)
         self.json_serializer = json_serializer
 
-    def persist(self, doc, print_num=True):
+    def persist(self, doc, print_num=True, **kwds):
         """Persist a json-formattable document.
 
         Parameters
@@ -174,11 +213,19 @@ class JSONLinesPersistence(DiskPersistence):
             Any object that can be dumped to a JSON string.
         print_num : bool
             Should number of processed documents be printed.
+        **kwds :
+            Keyword arguments passed to
+            :py:meth:`{{ cookiecutter.repo_name }}.persistence.DiskPersistence.log_progress`.
         """
+        batch_size = getattr(self, 'batch_size', None)
         with open(self.filepath, 'a') as f:
             self.inc(print_num=print_num)
             line = self.dump(doc)
             f.write(line+"\n")
+            if batch_size and batch_size > 0 and self.count % batch_size == 0 \
+            and self.logger:
+                self.logger.info(f"Processed {batch_size} items ({self.count} in total).")
+
 
     def dump(self, obj):
         """Dump an object to JSON string.
@@ -222,144 +269,61 @@ class JSONLinesPersistence(DiskPersistence):
                 yield self.load(line)
 
 
-class MongoPersistence(BasePersistence):
-    """MongoDB persistence component class.
+# Database persistence classes ------------------------------------------------
 
-    Attributes
-    ----------
-    model : mongoengine.Document
-        Mongoengine collection model class.
-    query_fields : str or iterable of str
-        List of field names to use for update query.
-    batch_size : int
-        Default batch size when making bulk updates.
-        Nonpositive values mean that all documents are updated in one batch.
-    action_hook : func
-        Action hook function for creating MongoDB update statements
-        in the case of update mode.
-        Default to standard `$set` statement.
-    logger : bool or str
-        Should logger be used to log bulk updates.
-        If `True` then the root logger is used.
-        If `False` no logging.
-        If it is a `str` then a logger of given name is used.
-    """
+class DBPersistence(BasePersistence):
+    """Database persistence base class."""
+    _interface = DBPersistenceInterface
 
-    def __init__(self, model=None, query_fields=None, batch_size=10**4,
-                 action_hook=action_hook_set, logger=True, item_name='document'):
-        """Initialization method."""
-        super().__init__(item_name)
-        self.model = model
-        self.query_fields = query_fields
-        self.batch_size = batch_size
-        self.action_hook = action_hook_set
-        self.documents = deque()
-        self.already_dropped_collection = False
-        self.set_logger(logger)
-
-    def set_logger(self, name=None):
-        """Set logger object.
+    def __init__(self, item_name='record', **kwds):
+        """Initialization method.
 
         Parameters
         ----------
-        name : bool, str or None
-            Name of the logger to set. Use root logger if `True`.
-            Do not set any logger if `None`.
-        """
-        if name and isinstance(name, str):
-            logger = getLogger(name)
-        elif name:
-            logger = getLogger()
-        else:
-            logger = None
-        self.logger = logger
-
-    def persist(self, doc=None, print_num=True, log=True, **kwds):
-        """Persist documents in MongoDB in batches.
-
-        Parameters
-        ----------
-        doc : dict-like
-            Dict-like object representing a valid MongoDB document.
-        print_num : bool
-            Should number of processed items be printed.
+        item_name : str
+            Item name.
         **kwds :
-            Parameters passed to `update`.
+            Keyword arguments used to construct `DBPersistenceInterface`
+            if `settings=None`.
         """
-        if doc is not None:
-            self.get_counter(print_num=print_num)
-            if hasattr(self.model, 'from_dict'):
-                doc = self.model.from_dict(doc, only_dict=True)
-            self.documents.appendleft(doc)
-        updated = self.update(**kwds)
-        if updated and log:
-            if print_num:
-                safe_print("")
-            self.logger.info("Updated collection '%s' [%d records in total]",
-                             self.model._get_collection_name(), self.n_processed)
+        super().__init__(item_name, **kwds)
 
-    def update(self, query_fields=None, min_batch_size=None,
-               action_hook=None, update=True, drop_first=False, **kwds):
-        """Persist a batch of documents in MongoDB.
+    def get_model_name(self):
+        """Get model name."""
+        return str(self.model)
+
+    def drop_model_data(self, query=None, **kwds):
+        """Drop model data.
 
         Parameters
         ----------
-        documents : list-like of dict-like objects
-            A list-like of dict-like object representing a valid MongoDB document.
-            Must provide `pop` method.
-        query_fields : str or iterable of str
-            Field names for update query.
-            If `None` then instance attribute is used.
-        min_batch_size : int
-            Minimal batch size. Instance attribute is used if `None`.
-        action_hook : func or None
-            Function for transforming documents into proper MongoDB update actions.
-            Use `action_hook_set` if `None`.
-        update : bool
-            Should update mode be used instead of insert.
-        drop_first : bool
-            Should collection be reset and dropped before updating
+        query : callable
+            If `None` then attribute `clear_model` is used.
+            If callable then it is called on self (and `**kwds`)
+            and the results is returned.
         **kwds :
-            Parameters passed to `make_bulk_update`.
+            Optional keyword arguments passed to either 'query' or
+            'self.clear_model' callable.
 
-        Returns
-        -------
-        bool
-            True if successful update has been done.
+        Raises
+        ------
+        ValueError
+            If query is not callable.
         """
-        collname = self.model._get_collection_name()
-        # Optionally drop existing data
-        if drop_first and not self.already_dropped_collection:
-            if self.logger:
-                self.logger.info("Dropping collection '%s'", collname)
-            self.model.drop_collection()
-            self.already_dropped_collection = True
-        # Check if update should be done considering selected batch size
-        if min_batch_size is None:
-            min_batch_size = self.batch_size
-        elif min_batch_size <= 0:
-            min_batch_size = len(self.documents)
-        if len(self.documents) < min_batch_size:
-            return False
-        # Do the update
-        if not query_fields:
-            query_fields = self.query_fields
-        # Perform update
-        if not action_hook:
-            action_hook = self.action_hook
-        docs = [ self.documents.pop() for _ in range(min_batch_size) ]
-        if not update:
-            docs = [ self.model(**d) for d in docs ]
-            self.model.objects.insert(docs)
+        if query is None:
+            if callable(self.clear_model):
+                res = self.clear_model(self, **kwds)
+            raise ValueError("'query' is not defined")
+        if callable(query):
+            res = query(self, **kwds)
         else:
-            if not self.query_fields:
-                errmsg = "Trying to do bulk update with undefined 'query_fields'"
-                raise AttributeError(errmsg)
-            make_bulk_update(
-                data=docs,
-                query_fields=query_fields,
-                model=self.model,
-                **kwds
-            )
-        # Return flag indicating successful update
-        return True
+            raise ValueError("'query' is not callable")
+        mname = self.get_model_name()
+        m = f"Model '{mname}' cleared with result {res}"
+        self.logger.info(m)
+        return res
+
+    def prepare(self):
+        """Prepare model before update."""
+        if self.clear_model is not None:
+            self.drop_model_data()

@@ -12,12 +12,15 @@ import time
 from collections import defaultdict
 from importlib import import_module
 from celery import Task
-from celery.result import ResultSet
+from celery.result import ResultSet, AsyncResult
+from celery.task.control import inspect
 from networkx import DiGraph, draw_shell
 from networkx.algorithms import is_directed_acyclic_graph, simple_cycles
 from networkx.algorithms import descendants, topological_sort
 import matplotlib.pyplot as pyplot
-from {{ cookiecutter.repo_name }}.taskiss.utils import merge_results
+from .utils import merge_results
+from .exceptions import CircularDependenciesError, NonExistentTaskDependencyError
+from .exceptions import AmbiguousTaskNameError, TaskNotRegisteredError
 
 
 class Scheduler(object):
@@ -28,7 +31,6 @@ class Scheduler(object):
     dependency_graph : :py:class:`networkx.classes.digraph.DiGraph`
         Dependency graph.
     """
-
     def __init__(self, include, build_dependency_graph=True, **kwds):
         """Initialization method.
 
@@ -47,6 +49,11 @@ class Scheduler(object):
             self.build_dependency_graph(**kwds)
         else:
             self.dependency_graph = DiGraph()
+
+    @property
+    def inspector(self):
+        """Celery inspector getter."""
+        return inspect()
 
     def get_registered_tasks(self, only_names=True):
         """Get list of registered Celery tasks.
@@ -68,22 +75,65 @@ class Scheduler(object):
                     tasks.append(task)
         return tasks
 
-    def get_task(self, task_name):
+    def resolve_task_name(self, task):
+        """Resolve shortened task name.
+
+        Parameters
+        ----------
+        task : str
+            Task name, possibly only its last *n* components.
+        """
+        tasks = self.get_registered_tasks(only_names=True)
+        candidates = []
+        task_parts = task.split('.')
+        task_n = len(task_parts)
+        for t in tasks:
+            t_parts = t.split('.')
+            t_n = len(t_parts)
+            if t_n < task_n:
+                continue
+            tn = '.'.join(t_parts[-task_n:])
+            if tn == task:
+                candidates.append(t)
+        if len(candidates) == 1:
+            return candidates.pop()
+        elif len(candidates) > 1:
+            raise AmbiguousTaskNameError.from_task(task, candidates)
+        raise TaskNotRegisteredError.from_task(task)
+
+    def get_task(self, task):
         """Get task by name.
 
         Parameters
         ----------
-        task_name : str
+        task : str
             Valid task name with full python module path.
         """
+        task = self.resolve_task_name(task)
         try:
-            task = import_module(task_name)
+            task = import_module(task)
         except ModuleNotFoundError:
-            task_name = task_name.split('.')
-            tail = '.'.join(task_name[:-1])
-            head = task_name[-1]
+            task = task.split('.')
+            tail = '.'.join(task[:-1])
+            head = task[-1]
             task = getattr(import_module(tail), head)
         return task
+
+    def get_tasks_status(self, *task_ids, only_active=True):
+        """Get task(s) status.
+
+        Parameters
+        ----------
+        *task_ids :
+            Task ids.
+        only_active : bool
+            Should only active be returned.
+        """
+        active_ids = self._get_active_tasks_ids()
+        for task_id in task_ids:
+            if task in active_ids:
+                r = AsyncResult(task_id)
+                yield task_id, r.status
 
     def register_task(self, task, check_cycles=True):
         """Register task and rebuild the dependency graph.
@@ -124,7 +174,7 @@ class Scheduler(object):
             return
         for dep in dependencies:
             if dep not in all_tasks:
-                raise NonExistentTaskDependencyError(dep)
+                raise NonExistentTaskDependencyError.from_dependency(dep)
             if dep not in self.dependency_graph.nodes:
                 self.dependency_graph.add_node(dep)
         edges = [ (dep, task.name) for dep in dependencies ]
@@ -150,19 +200,27 @@ class Scheduler(object):
         for task in tasklist:
             self._add_task_dependencies(task)
         if check_cycles and self.circular_dependencies():
-            raise CircularDependenciesError(self.dependency_graph)
+            raise CircularDependenciesError.from_dependency_graph(self.dependency_graph)
 
-    def show_dependency_graph(self, with_labels=True, **kwds):
+    def show_dependency_graph(self, task=None, with_labels=True, **kwds):
         """Show dependency graph.
 
         Parameters
         ----------
+        task : str
+            Optional task name.
+            If specified then only a subgraph starting from the task
+            considered as the root node is showed.
         with_labels : bool
             Should labels be shown on the graph.
         **kwds :
-            Other params passed to :py:function:`networkx.draw`.
+            Other params passed to :py:func:`networkx.draw`.
         """
-        draw_shell(self.dependency_graph, with_labels=with_labels, **kwds)
+        graph = self.dependency_graph
+        if task:
+            task = self.resolve_task_name(task)
+            graph = graph.subgraph([ task, *descendants(graph, task)])
+        draw_shell(graph, with_labels=with_labels, **kwds)
         pyplot.show()
 
     def get_ordered_descendants(self, task):
@@ -173,6 +231,7 @@ class Scheduler(object):
         task : str
             Task name.
         """
+        task = self.resolve_task_name(task)
         toposort = topological_sort(self.dependency_graph)
         dependent_tasks = [
             t for t in toposort
@@ -180,20 +239,11 @@ class Scheduler(object):
         ]
         return dependent_tasks
 
-    def execute_task(self, task, timeout=5, propagate=False, wait=5, **kwds):
-        """Execute task.
+    def run_task(self, task, timeout=5, propagate=False, wait=5, **kwds):
+        """Run task.
 
-        This function executes a Celery task and optionally
+        This function runs a Celery task and optionally
         propagates execution down to all tasks below on the dependency graph.
-
-        Notes
-        -----
-        For now there is no way to ascertain proper task execution order
-        in case of multiple, nonlinear dependency chains,
-        so task, especially tasks with dependencies, should run
-        with no arguments.
-
-        This may change in the future.
 
         Parameters
         ----------
@@ -248,37 +298,3 @@ class Scheduler(object):
                     tasksort.remove(item)
                 else:
                     yield item
-
-# Exceptions ------------------------------------------------------------------
-
-class CircularDependenciesError(Exception):
-    """Circular dependencies error class."""
-
-    def __init__(self, dependency_graph, *args, **kwds):
-        """Initialization method.
-
-        Parameters
-        ----------
-        dependency_graph : :py:class:`networkx.DiGraph`
-            Dependency graph object.
-        """
-        cycles = simple_cycles(dependency_graph)
-        message = "circular dependencies: {}".format(
-            "; ".join([ "=>".join(cycle) for cycle in cycles ])
-        )
-        super().__init__(message, *args, **kwds)
-
-
-class NonExistentTaskDependencyError(Exception):
-    """Non-existent task dependency error class."""
-
-    def __init__(self, dependency, *args, **kwds):
-        """Initialization method.
-
-        Parameters
-        ----------
-        dependency : str
-            Name of dependency.
-        """
-        message = "Non-existent dependency ('{}') specified".format(dependency)
-        super().__init__(message, *args, **kwds)

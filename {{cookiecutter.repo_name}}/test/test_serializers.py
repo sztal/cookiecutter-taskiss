@@ -1,4 +1,4 @@
-"""Test cases for :py:mod:`{{ cookiecutter.repo_name }}.utils.serializers`."""
+"""Test cases for :py:module:`{{ cookiecutter.repo_name }}.utils.serializers`."""
 import json
 from datetime import datetime
 from {{ cookiecutter.repo_name }}.utils.serializers import JSONEncoder

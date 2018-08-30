@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 # pylint: disable-all
-
 import os
 import sys
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
-    from distutils.core import setup
-
+    from distutils.core import setup, find_packages
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
@@ -33,15 +31,18 @@ setup(
     author_email='{{ cookiecutter.email }}',
     url='https://github.com/{{ cookiecutter.github_username }}/{{ cookiecutter.repo_name }}',
     packages=[
-        '{{ cookiecutter.repo_name }}',
+        # '{{ cookiecutter.repo_name }}',
+        *find_packages()
     ],
     setup_requires=[
-        'pytest-runner',
-        'pytest-pylint'
+        'pytest-runner>=4.2<5',
     ],
-    test_requires=[
+    tests_require=[
         'pytest',
-        'pylint'
+        'pylint',
+        'pytest-pylint',
+        'pytest-profiling',
+        'coverage'
     ],
     package_dir={'{{ cookiecutter.repo_name }}': '{{ cookiecutter.repo_name }}'},
     include_package_data=True,
@@ -54,7 +55,10 @@ setup(
         'click>=6.7,<7',
         'mongoengine>=0.15.3,<1',
         'scrapy>=1.5.1,<2',
-        'dateparser>=0.7.0,<1'
+        'scrapy-splash>=0.7.2,<1',
+        'dateparser>=0.7.0,<1',
+        'tldextract>=2.2.0,<3',
+        'cerberus>=1.2,<2'
     ],
     license='MIT',
     zip_safe=False,
@@ -70,4 +74,8 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
+    entry_points="""
+        [console_scripts]
+        {{ cookiecutter.cli_name }}={{ cookiecutter.repo_name }}.cli:cli
+    """
 )

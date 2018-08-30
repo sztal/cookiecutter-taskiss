@@ -25,7 +25,9 @@ lib64
 # Installer logs
 pip-log.txt
 
-# Unit test / coverage reports
+# Unit test / coverage reports / profiling
+htmlcov
+prof
 .coverage
 .tox
 nosetests.xml

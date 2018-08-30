@@ -37,13 +37,13 @@ test-quick:
 	py.test
 
 test:
-	py.test --run-tasks
+	py.test --all
 
 test-pylint:
 	py.test --pylint -m pylint
 
 test-all:
-	py.test --pylint --run-tasks
+	py.test --pylint --all
 
 test-tox:
 	tox
@@ -52,7 +52,6 @@ coverage:
 	coverage run --source {{ cookiecutter.repo_name }} setup.py test
 	coverage report -m
 	coverage html
-	open htmlcov/index.html
 
 docs:
 	rm -f docs/{{ cookiecutter.repo_name }}.rst
@@ -60,7 +59,6 @@ docs:
 	sphinx-apidoc -o docs/ {{ cookiecutter.repo_name }}
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
-	open docs/_build/html/index.html
 
 release: clean
 	python setup.py sdist upload

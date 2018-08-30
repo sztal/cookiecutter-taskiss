@@ -1,11 +1,11 @@
 """Test _Scheduler_ class."""
 import pytest
-from test.tasks import cfg
 
 
 @pytest.mark.task
-def test_execute_task(scheduler):
-    res = scheduler.execute_task(cfg, cfg={
+def test_run_task(scheduler, tasks):
+    cfg = tasks.cfg
+    res = scheduler.run_task(cfg, cfg={
         't1': 10,
         't2': 20,
         't3': ['a', 'b', 'c']
@@ -19,6 +19,6 @@ def test_execute_task(scheduler):
         { 'x': 10 },
         { 'n': 200 },
         { 'path': '[200] a => b => c' },
-        { 'test.tasks.t7': [ '[200] a => b => c' ] }
+        { '_args': [ '[200] a => b => c' ] }
     ]
     assert res == exp

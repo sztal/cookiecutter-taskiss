@@ -4,7 +4,9 @@
 
 import os
 import logging.config
-from {{ cookiecutter.repo_name }}.utils.path import make_path
+from logging import getLogger, Logger
+from {{ cookiecutter.repo_name }}.config import cfg, MODE
+from .path import make_path
 
 
 def init(root_path):
@@ -15,7 +17,7 @@ def init(root_path):
 
 FORMATTERS = {
     'default': {
-        'format': "[%(asctime)s] %(name)s | %(levelname)s | %(module)s | %(funcName)s | %(message)s",
+        'format': "[%(asctime)s] (@%(process)s|%(thread)s) %(levelname)s | %(pathname)s | %(funcName)s | %(message)s",
         'datefmt': "%Y-%m-%d %H:%M:%S"
     },
     'message': {
@@ -23,6 +25,24 @@ FORMATTERS = {
         'datefmt': "%Y-%m-%d %H:%M:%S"
     }
 }
+
+def get_logger(logger=True):
+    """Get logger.
+
+    Parameters
+    ----------
+    logger : str or bool
+        If `True` then root logger is returned.
+        If *falsy* the `None` is returned.
+        If string then a logger of given name is returned.
+    """
+    if isinstance(logger, Logger):
+        return logger
+    if not logger:
+        return
+    if logger is True:
+        return getLogger()
+    return getLogger(logger)
 
 def make_logging_settings(root_path):
     """Make logging settings dict.
@@ -39,7 +59,7 @@ def make_logging_settings(root_path):
         'handlers': {
             'default': {
                 'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
+                'level': cfg.getenvvar(MODE, 'log_level', fallback='INFO'),
                 'formatter': 'default',
                 'filename': make_path(root_path, '{{ cookiecutter.repo_name }}', '{{ cookiecutter.repo_name }}.log'),
                 'maxBytes': 1048576,
@@ -55,7 +75,7 @@ def make_logging_settings(root_path):
             },
             'message': {
                 'class': 'logging.StreamHandler',
-                'level': 'INFO',
+                'level': cfg.getenvvar(MODE, 'log_level', fallback='INFO'),
                 'formatter': 'message',
                 'stream': 'ext://sys.stdout'
             },
@@ -67,7 +87,7 @@ def make_logging_settings(root_path):
             },
             'taskiss': {
                 'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
+                'level': cfg.getenvvar(MODE, 'log_level', fallback='INFO'),
                 'formatter': 'default',
                 'filename': make_path(root_path, 'taskiss', 'taskiss.log'),
                 'maxBytes': 1048576,
@@ -130,7 +150,7 @@ def make_scrapy_logging_settings(root_path):
         'handlers': {
             'scrapy': {
                 'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
+                'level': cfg.getenvvar(MODE, 'log_level', fallback='INFO'),
                 'formatter': 'default',
                 'filename': make_path(root_path, 'scrapy', 'scrapy.log'),
                 'maxBytes': 1048576,
