@@ -94,7 +94,7 @@ def parse_args(*args, parser=None, repeated=False):
         Sequence of arguments provided as string of form 'key=value'.
     parser : { None, 'eval', 'json' }
         If `None` the values remain ordinary strings.
-        If `eval` then :py:function:`ast.literal_eval` is called on values.
+        If `eval` then :py:func:`ast.literal_eval` is called on values.
         If `json` then :py:meth:`json.loads` is used to parse the values.
     repeated : bool
         Should repeated arguments be allowed.

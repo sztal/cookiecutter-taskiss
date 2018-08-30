@@ -43,7 +43,7 @@ class BaseInterface(metaclass=BaseInterfaceMetaclass):
     _allow_default : bool
         Should default values be allowed.
     _defaultvalue : any
-        Default value is `_allow_default=True`.
+        Default value if `_allow_default=True`.
 
     Notes
     -----

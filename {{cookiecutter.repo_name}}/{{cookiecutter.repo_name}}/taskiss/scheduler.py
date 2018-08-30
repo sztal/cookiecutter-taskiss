@@ -214,7 +214,7 @@ class Scheduler(object):
         with_labels : bool
             Should labels be shown on the graph.
         **kwds :
-            Other params passed to :py:function:`networkx.draw`.
+            Other params passed to :py:func:`networkx.draw`.
         """
         graph = self.dependency_graph
         if task:

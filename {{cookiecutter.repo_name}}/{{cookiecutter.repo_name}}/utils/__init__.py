@@ -106,7 +106,7 @@ def iter_classes(path='.', obj_predicate=None, **kwds):
     """Iter over all class objects with optional predicate based filtering.
 
     Uses the same parameters as
-    :py:function:`{{ cookiecutter.repo_name }}.utils.iter_objects`.
+    :py:func:`{{ cookiecutter.repo_name }}.utils.iter_objects`.
     """
     def wrapped_obj_predicate(obj):
         """Wrapped object predicate function."""
@@ -162,10 +162,10 @@ def get_class(path_or_name, package=None, **kwds):
         Proper python path or class name.
     package : str or None
         Passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.import_python`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.import_python`.
     **kwds :
         Keyword arguments passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.iter_classes`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.iter_classes`.
 
     Raises
     ------

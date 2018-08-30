@@ -157,7 +157,7 @@ class MongoPersistence(DBPersistence):
         Parameters
         ----------
         bulk_write_kwds : dict or None
-            Arguments passed to :py:function:`pymongo.bulk_write`.
+            Arguments passed to :py:func:`pymongo.bulk_write`.
             If `None` then `ordered=False` is passed.
         **kwds :
             Other arguments passed to

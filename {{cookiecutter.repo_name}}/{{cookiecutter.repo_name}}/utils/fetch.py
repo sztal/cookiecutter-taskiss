@@ -13,7 +13,7 @@ def iter_db_connectors(predicate=None, **kwds):
         Additional predicate function.
     **kwds :
         Keyword arguments passed to
-        :py:function:`.iter_objects`.
+        :py:func:`.iter_objects`.
     """
     obj_predicate=lambda x: isinstance(x, AbstractDBConnector) \
         and (predicate(o) if predicate else True)
@@ -29,7 +29,7 @@ def iter_db_models(predicate=None, **kwds):
         Additional predicate function.
     **kwds :
         Keyword arguments passed to
-        :py:function:`.iter_classes`.
+        :py:func:`.iter_classes`.
     """
     obj_predicate = lambda o: isinstance(o, AbstractDBModel) \
         and issubclass(o, AbstractDBMixin) \
@@ -46,10 +46,10 @@ def get_db_model(path_or_name, package=None, **kwds):
         Proper python path or class name.
     package : str or None
         Passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.import_python`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.import_python`.
     **kwds :
         Keyword arguments passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.fetch.iter_db_models`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.fetch.iter_db_models`.
     """
     if is_python_path(path_or_name, object_only=True):
         return import_python(path_or_name, package=package)
@@ -66,7 +66,7 @@ def iter_importers(predicate=None, **kwds):
         Additional predicate function.
     **kwds :
         Keyword arguments passed to
-        :py:function:`.iter_objects`.
+        :py:func:`.iter_objects`.
     """
     obj_predicate = lambda o: isinstance(o, AbstractImporterMetaclass) \
         and (predicate(o) if predicate else True)
@@ -82,10 +82,10 @@ def get_importer(path_or_name, package=None, **kwds):
         Proper python path or class name.
     package : str or None
         Passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.import_python`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.import_python`.
     **kwds :
         Keyword arguments passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.fetch.iter_importers`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.fetch.iter_importers`.
     """
     if is_python_path(path_or_name, object_only=True):
         return import_python(path_or_name, package=package)
@@ -102,7 +102,7 @@ def iter_persistence(predicate=None, **kwds):
         Additional predicate function.
     **kwds :
         Keyword arguments passed to
-        :py:function:`.iter_objects`.
+        :py:func:`.iter_objects`.
     """
     obj_predicate = lambda o: isinstance(o, AbstractPersistenceMetaclass) \
         and (predicate(o) if predicate else True)
@@ -118,10 +118,10 @@ def get_persistence(path_or_name, package=None, **kwds):
         Proper python path or class name.
     package : str or None
         Passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.import_python`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.import_python`.
     **kwds :
         Keyword arguments passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.fetch.iter_persistence`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.fetch.iter_persistence`.
     """
     if is_python_path(path_or_name, object_only=True):
         return import_python(path_or_name, package=package)

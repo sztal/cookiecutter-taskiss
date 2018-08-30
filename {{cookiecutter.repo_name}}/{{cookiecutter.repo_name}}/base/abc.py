@@ -1,4 +1,4 @@
-"""Abstract base classes."""
+"""**Abstract base classes**"""
 from abc import ABCMeta, abstractmethod
 
 

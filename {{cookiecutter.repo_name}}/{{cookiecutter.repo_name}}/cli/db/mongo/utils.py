@@ -14,7 +14,7 @@ def get_mongo_model(path_or_name, **kwds):
         Proper python path or class name.
     **kwds :
         Keyword arguments passed to
-        :py:function:`{{ cookiecutter.repo_name }}.utils.fetch.get_db_model`.
+        :py:func:`{{ cookiecutter.repo_name }}.utils.fetch.get_db_model`.
     """
     return get_db_model(path_or_name,
                         predicate=lambda x: isinstance(x, AbstractMongoModel), **kwds)

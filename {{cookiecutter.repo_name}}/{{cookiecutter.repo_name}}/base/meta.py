@@ -153,11 +153,11 @@ class Composable(type):
     class level and instance level.
 
     In both cases they are defined based on a private class/instance
-    attribute `__components`, and this name automatically expands to
-    `_<classname>__components`. In both cases `__component` attribute
+    attribute ``__components``, and this name automatically expands to
+    ``_<classname>__components``. In both cases ``__component`` attribute
     must be a tuple of 2-tuples providing name (str) and component instance.
     Automatic name expansion does not matter as the metaclass extends the
-    standard `__getattr__` method that solves this problem.
+    standard ``__getattr__`` method that solves this problem.
 
     Injected components may be accessed as standard attributes using the
     provided names. Moreover, all attributes of injected components
@@ -174,17 +174,19 @@ class Composable(type):
     Differentiation between instance and class level components
     is useful, as it allow to define components available only for
     specific instances and which may be initialized in runtime
-    within the host object `__init__` method.
+    within the host object ``__init__`` method.
 
     Components attributes after assignment are internally represented
     as :py:class:`collections.OrderedDict` instances to facilitate
     accessing by name while keeping the order fixed.
 
-    Special methods
-    :py:meth:`{{ cookiecutter.repo_name }}.base.meta.getcomponents_`,
-    :py:meth:`{{ cookiecutter.repo_name }}.base.meta.setcomponents_`,
-    :py:meth:`{{ cookiecutter.repo_name }}.base.meta.getattribute_`
-    :py:meth:`{{ cookiecutter.repo_name }}.base.meta.setattribute_`,
+    Special methods:
+
+    * :py:meth:`{{ cookiecutter.repo_name }}.base.meta.getcomponents_`,
+    * :py:meth:`{{ cookiecutter.repo_name }}.base.meta.setcomponents_`,
+    * :py:meth:`{{ cookiecutter.repo_name }}.base.meta.getattribute_`
+    * :py:meth:`{{ cookiecutter.repo_name }}.base.meta.setattribute_`,
+
     are defined with trailing underscore to avoid name collisions.
     """
     def __new__(cls, name, bases, namespace, **kwds):
