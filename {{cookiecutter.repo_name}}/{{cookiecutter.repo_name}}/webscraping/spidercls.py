@@ -11,6 +11,7 @@ from w3lib.url import canonicalize_url
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
 from .interface import ScrapyCLIExtraArgsInterface
+from .settings import HASHING_SALT, LOGGER_NAME
 
 
 class BaseSpider(Spider):
@@ -72,13 +73,9 @@ class BaseSpider(Spider):
     storage = None
     overwrite = False
     test_url = None
-    hashing_salt = cfg.get(MODE, 'web_user_salt')
+    hashing_salt = HASHING_SALT
 
-    # Allowed values for extra attributes
-    _storage_values = [ None, 'all', 'no', 'nodb' ]
-    _mode_values = [ None, 'debug' ]
-
-    logger = getLogger('scrapy')
+    logger = getLogger(LOGGER_NAME) if LOGGER_NAME else getLogger()
 
     # Spider-level scrapy settings
     custom_settings = {
@@ -168,6 +165,7 @@ class BaseSpider(Spider):
         item = self.parse_item(response)
         if self.mode and self.mode == 'debug':
             pdb.set_trace()
+        self.logger.debug(f"Parsed item from {response.url}: {item}")
         return item
 
     def hash_string(self, string, salt=None):

@@ -8,8 +8,12 @@
 #     https://doc.scrapy.org/en/latest/topics/settings.html
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
+from {{ cookiecutter.repo_name }}.config import cfg
 
 BOT_NAME = '{{ cookiecutter.repo_name }}'
+
+HASHING_SALT = cfg.get(MODE, 'web_user_salt')
+LOGGER_NAME = 'scrappy'
 
 SPIDER_MODULES = ['{{ cookiecutter.repo_name }}.webscraping.spiders']
 NEWSPIDER_MODULE = '{{ cookiecutter.repo_name }}.webscraping.spiders'
