@@ -12,7 +12,7 @@ EXAMPLE_MONGO_MODEL = 'ExampleMongoModel'
 class TestCLIDbMongo:
     """Test cases for `db mongo` module."""
 
-    @pytest.mark.parametrize('arg', [('--show-dbs',), ('--show-models',)])
+    @pytest.mark.parametrize('arg', ['--show-dbs', '--show-models'])
     def test_db(self, cli_runner, arg):
         """Test cases for DB module."""
         res = cli_runner.invoke(db, [arg])

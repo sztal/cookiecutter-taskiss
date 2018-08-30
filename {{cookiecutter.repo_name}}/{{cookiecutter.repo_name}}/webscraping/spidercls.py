@@ -10,7 +10,7 @@ from scrapy_splash import SplashRequest, SplashJsonResponse
 from w3lib.url import canonicalize_url
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils.processors import parse_bool
-from {{ cookiecutter.repo_name }}.base.interface import ScrapyCLIExtraArgsInterface
+from .interface import ScrapyCLIExtraArgsInterface
 
 
 class BaseSpider(Spider):
@@ -109,15 +109,19 @@ class BaseSpider(Spider):
             and second a dict with additional request metadata.
             Second element is not used if it is falsy.
         """
-        raise NotImplementedError(
-            "Subclass does not define the abstract `get_urls` method"
-        )
+        start_urls = getattr(self, 'start_urls', [])
+        if not start_urls:
+            cn = self.__class__.__name__
+            m = f"'{cn}' does not define the abstract `get_urls` method neither `start_urls` attribute"
+            raise NotImplementedError(m)
+        for url in start_urls:
+            yield url, { 'url': url }
 
     def start_requests(self):
         """Generate start requests."""
         self.parse_extra_args()
         if self.test_url:
-            urls = [ (self.test_url, { 'link': self.test_url }) ]
+            urls = [ (self.test_url, { 'url': self.test_url }) ]
         else:
             urls = self.get_urls()
         n = 0
@@ -145,6 +149,26 @@ class BaseSpider(Spider):
         """
         request = Request(url, **kwds)
         return request
+
+    def parse_item(self, response):
+        """Default item parsing method."""
+        if not self.item_loader:
+            cn = self.__class__.__name__
+            raise AttributeError(f"'{cn}' must define 'item_loader' class attribute")
+        data = response.meta.get('data', {})
+        data['final_url'] = canonicalize_url(response.url)
+        loader = self.item_loader(response=response)    # pylint: disable=E1102
+        loader.add_data(data)
+        loader.setup()
+        item = loader.load_item()
+        return item
+
+    def parse(self, response):
+        """Default response parsing method."""
+        item = self.parse_item(response)
+        if self.mode and self.mode == 'debug':
+            pdb.set_trace()
+        return item
 
     def hash_string(self, string, salt=None):
         """Get MD5 hash from a string.
@@ -176,7 +200,18 @@ class SplashSpider(BaseSpider):
         Lua script defining in-browser actions to perform before rendering
         scrapy-splash response. Used only if splash is `True`.
     """
-    lua_source = None
+    splash_render_wait = 2.5
+    lua_source = """
+    function main(splash)
+        assert(splash:go(splash.args.url))
+        splash:wait({render_wait})
+        local res = {
+            url = splash:url(),
+            src=splash:html()
+        }
+        return res
+    end
+    """
 
     # Spider-level scrapy settings
     custom_settings = BaseSpider.custom_settings.update({
@@ -194,7 +229,14 @@ class SplashSpider(BaseSpider):
 
     # Methods -----------------------------------------------------------------
 
-    def make_request(self, url, args=None, **kwds):
+    @classmethod
+    def get_lua_source(cls, render_wait=None, **kwds):
+        """Get *Lua* script source code."""
+        if not render_wait:
+            render_wait = cls.splash_render_wait
+        return cls.lua_source.format(render_wait=render_wait, **kwds)
+
+    def make_request(self, url, args=None, lua_args=None, **kwds):
         """Make splash-aware request object.
 
         Parameters
@@ -203,6 +245,8 @@ class SplashSpider(BaseSpider):
             Request url.
         args : dict or None
             Additional splash arguments.
+        lua_args : dict
+            Keyword arguments passed to :py:meth:`get_lua_source`.
         **kwds :
             Parameters passed to `scrapy.Request` constructor.
 
@@ -212,8 +256,9 @@ class SplashSpider(BaseSpider):
             A request object.
         """
         args = {} if args is None else args
+        lua_args = {} if lua_args is None else lua_args
         if self.lua_source:
-            args.update(lua_source=self.lua_source)
+            args.update(lua_source=self.get_lua_source(**lua_args))
             kwds.update(
                 endpoint='execute',
                 args=args
@@ -226,9 +271,9 @@ class SplashSpider(BaseSpider):
     def parse(self, response):
         """Parse method."""
         if isinstance(response, SplashJsonResponse):
-            data = json.loads(response.body_as_unicode())
-            body = data['src']
-            url = data.get('final_url', response.url)
+            res = json.loads(response.body_as_unicode())
+            body = res['src']
+            url = res['url']
             response = HtmlResponse(
                 url=url,
                 body=body,

@@ -48,13 +48,42 @@ def parse_date(dt, preprocessor=None, **kwds):
         dt = preprocessor(dt, **kwds)
     return dateparser.parse(dt)
 
-def parse_bool(x):
-    """Parse boolean string."""
+def parse_bool(x, true=('true', 'yes', '1', 'on'), add_true=(),
+               false=('false', 'no', '0', 'off'), add_false=()):
+    """Parse boolean string.
+
+    Parameters
+    ----------
+    x : bool or str
+        Boolean value as `bool` or `str`.
+    true : list of str
+        List of accepted string representations of `True` value.
+    add_true  : list of str
+        Optional list to of `True` representations to append to the default list.
+    false : list of str
+        List of accepted string representations of `False` value.
+    add_false : list of str
+        Optional list of `False` representations to append to the default list.
+
+    Notes
+    -----
+    `true` and `false` should always consist of only lowercase strings,
+    as all comparisons are done after lowercasing `x`.
+
+    Raises
+    ------
+    ValueError
+        If `x` is not `bool` and not contained either in `true` or `false`.
+    """
     if isinstance(x, bool):
         return x
     x = x.lower()
-    if x in ('true', 'yes', '1', 'on'):
+    if add_true:
+        true = (*true, *add_true)
+    if add_false:
+        false = (*false, *add_false)
+    if x in true:
         return True
-    if x in ('false', 'no', '0', 'off'):
+    if x in false:
         return False
     raise ValueError("Value '{}' can not be interpreted as boolean".format(x))

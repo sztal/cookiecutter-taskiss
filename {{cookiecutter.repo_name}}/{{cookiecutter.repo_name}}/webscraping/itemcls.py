@@ -1,8 +1,8 @@
 """Base item and item loader classes."""
+from scrapy import Item
 from scrapy.loader import ItemLoader
 from scrapy.loader.processors import TakeFirst, MapCompose
-from .utils import normalize_web_content
-from {{ cookiecutter.repo_name }}.utils.string import strip
+from .utils import normalize_web_content, strip
 
 class BaseItemLoader(ItemLoader):
     """Base item loader class.
@@ -10,11 +10,12 @@ class BaseItemLoader(ItemLoader):
     It defines helper method used for initializing instances
     of specialized subclasses.
     """
+    default_item_class = None
     default_input_processor = MapCompose(normalize_web_content, strip)
     default_output_processor = TakeFirst()
 
     # Selectors
-    sel_container = (None, None)
+    container_sel = None
 
     # Methods -----------------------------------------------------------------
 
@@ -23,9 +24,19 @@ class BaseItemLoader(ItemLoader):
         super().__init__(*args, **kwds)
         self._container = None
 
+    def fields(self):
+        """Fields getter."""
+        if self.default_item_class is None:
+            cn = self.__class__.__name__
+            raise AttributeError(f"'{cn}' does not define 'default_item_class' attribute")
+        return [ f for f in self.default_item_class.fields ]
+
     def assign_container_selector(self):
         """Assign container selector."""
-        selector, selector_type = self.sel_container
+        if self.container_sel is None:
+            cn = self.__class__.__name__
+            raise AttributeError(f"'{cn}' does not define 'container_sel' attribute")
+        selector, selector_type = self.container_sel
         if selector_type == 'xpath':
             self._container = self.nested_xpath(selector)
         elif selector_type == 'css':
@@ -33,7 +44,7 @@ class BaseItemLoader(ItemLoader):
         else:
             raise ValueError("Unknown selector type: {}".format(selector_type))
 
-    def assign_selector(self, field_name, selector_name=None):
+    def assign_selector(self, field_name, selector_name=None, omit=()):
         """Assign selector to a field.
 
         Parameters
@@ -42,23 +53,24 @@ class BaseItemLoader(ItemLoader):
             Field name.
         selector_name : str
             Selector name. May not have the 'sel_' prefix.
+        omit : list of str
+            List of fields to omit.
         """
         if not selector_name:
-            selector_name = field_name
-        if not selector_name.startswith('sel_'):
-            selector_name = 'sel_'+selector_name
-        for sname in [ a for a in dir(self) if a.startswith(selector_name) ]:
-            selector_spec = getattr(self, sname)
-            if selector_spec is None:
-                return
-            selector, selector_type = selector_spec
-            if selector_type == 'xpath':
-                self._container.add_xpath(field_name, selector)
-            elif selector_type == 'css':
-                self._container.add_css(field_name, selector)
-            else:
-                raise ValueError("Unknown selector type: {}".format(selector_type))
+            selector_name = field_name+'_sel'
+        selector_spec = getattr(self, sname, None)
+        if selector_spec is None:
+            return
+        selector, selector_type = selector_spec
+        if selector_type == 'xpath':
+            self._container.add_xpath(field_name, selector)
+        elif selector_type == 'css':
+            self._container.add_css(field_name, selector)
+        else:
+            raise ValueError(f"Unknown selector type: {selector_type}")
 
     def setup(self):
         """Setup loader selectors."""
         self.assign_container_selector()
+        for field in self.fields:
+            self.assign_selector(field)

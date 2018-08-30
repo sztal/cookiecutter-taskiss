@@ -63,18 +63,6 @@ def normalize_web_content(x, keep=('h2', 'h3', 'h4', 'h5', 'h6', 'strong'),
         pass
     return x
 
-def hash_user(string):
-    """Hash username.
-
-    Username is salted with the salt defined in the config.
-
-    Parameters
-    ----------
-    string : str
-        Username.
-    """
-    return hash_string(string, salt=USER_SALT)
-
 def load_item(body, item_loader, item=None, url='placeholder_url',
               callback=None, encoding='utf-8'):
     """Load item from HTML string.
@@ -114,3 +102,51 @@ def load_item(body, item_loader, item=None, url='placeholder_url',
         callback(loader)
     item = loader.load_item()
     return item
+
+def sectionize(parts, first_is_heading=False):
+    """Join parts of the text after splitting into sections with headings.
+
+    This function assumes that a text was splitted at section headings,
+    so every two list elements after the first one is a heading-section pair.
+    This assumption is used to join sections with their corresponding headings.
+
+    Parameters
+    ----------
+    parts : list of str
+        List of text parts.
+    first_is_heading : bool
+        Should first element be treated as heading in lists of length greater than 1.
+    """
+    if len(parts) <= 1:
+        return parts
+    first = []
+    if not first_is_heading:
+        first.append(parts.pop())
+    sections = first +[ " ".join(parts[i:i+2]) for i in range(len(parts), 2) ]
+    return sections
+
+def strip(x):
+    """Strip a string.
+
+    Parameters
+    ----------
+    x : any
+        A str object which is to be stripped. Anything else is returned as is.
+    """
+    if isinstance(x, str):
+        return x.strip()
+    return x
+
+def split(x, divider):
+    """Split a string.
+
+    Parameters
+    ----------
+    x : any
+        A str object to be split. Anything else is returned as is.
+    divider : str
+        Divider string.
+    """
+    if isinstance(x, str):
+        return x.split(divider)
+    return x

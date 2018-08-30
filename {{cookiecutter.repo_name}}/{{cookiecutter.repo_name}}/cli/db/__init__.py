@@ -14,5 +14,4 @@ def db():
     """Database management module."""
     pass
 
-
 db.add_command(mongo)
