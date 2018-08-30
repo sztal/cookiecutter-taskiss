@@ -1,4 +1,4 @@
-"""Tests for `{{ cookiecutter.taskmodule_name }}` module.
+"""Tests for `tasks` module.
 
 This is module for idempotent task tests.
 In other words, here `.run()` methods should be tested.
@@ -16,8 +16,8 @@ class TestTasksEndToEnd:
     """End-to-end not-idempotent task tests."""
     timeout = 30
 
-    def test_t5(self, {{ cookiecutter.taskmodule_name }}):
+    def test_t5(self, tasks):
         """Test case."""
-        t5 = {{ cookiecutter.taskmodule_name}}.t5
-        res = t5.delay(x=10, y=10).get(timeout=self.timeout)
+        t5 = tasks.t5
+        res = t5(x=10, y=10)
         assert res == { 'n': 100 }

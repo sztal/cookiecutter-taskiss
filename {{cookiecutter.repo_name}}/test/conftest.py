@@ -9,13 +9,14 @@ Tests can also be run within working
 """
 import os
 import pytest
+from click.testing import CliRunner
 from {{ cookiecutter.repo_name }} import taskiss
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.taskiss.scheduler import Scheduler
 from {{ cookiecutter.repo_name }}.config.taskiss import include
 # Import tasks only if taskiss object is defined
 if taskiss:
-        import {{ cookiecutter.repo_name }}.{{ cookiecutter.taskmodule_name }} as _{{ cookiecutter.taskmodule_name }}
+        import {{ cookiecutter.repo_name }}.tasks as _tasks
 
 # Custom options --------------------------------------------------------------
 
@@ -67,9 +68,9 @@ def taskiss():
     return taskiss
 
 @pytest.fixture(scope='session')
-def {{ cookiecutter.taskmodule_name }}():
-    """Fixture: *Taskiss* {{ cookiecutter.taskmodule_name }}."""
-    return _{{ cookiecutter.taskmodule_name }}
+def tasks():
+    """Fixture: *Taskiss* tasks."""
+    return _tasks
 
 @pytest.fixture(scope='session')
 def celery_config():
@@ -79,7 +80,7 @@ def celery_config():
             os.environ.get('CELERY_TEST_BROKER_URL', 'pyamqp://'),
         'result_backend':
             os.environ.get('CELERY_TEST_RESULT_BACKEND', 'redis://127.0.0.1'),
-        'include': ['{{cookiecutter.repo_name}}.{{cookiecutter.taskmodule_name}}'],
+        'include': ['{{cookiecutter.repo_name}}.tasks'],
         'task_serializer': 'json',
         'result_serializer': 'json',
         'accept_content': ['json'],
@@ -110,3 +111,8 @@ def mod_predicate():
             return False
         return True
     return _mod_predicate
+
+@pytest.fixture
+def cli_runner():
+    """Command-line test runner."""
+    return CliRunner()

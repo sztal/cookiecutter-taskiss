@@ -4,6 +4,7 @@ import json
 from collections import Iterable, Sequence, Mapping, defaultdict
 from types import GeneratorType
 from ast import literal_eval
+import click
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.utils import safe_print
 from {{ cookiecutter.repo_name }}.utils.serializers import UniversalJSONEncoder
@@ -37,7 +38,7 @@ def show_unique(iterator):
         shown.append(item)
         pprint(item)
 
-def eager_callback(callback, *args, **kwds):
+def eager_callback(callback):
     """Warpper for executing callbacks of eager options.
 
     Parameters
@@ -51,7 +52,7 @@ def eager_callback(callback, *args, **kwds):
     **kwds :
         Keyword arguments passed to the callback.
     """
-    def callback_wrapper(ctx, param, value):
+    def callback_wrapper(ctx, param, value, *args, **kwds):
         """Wrapped callback."""
         if not value or ctx.resilient_parsing:
             return
@@ -103,6 +104,8 @@ def parse_args(*args, parser=None, repeated=False):
     for arg in args:
         try:
             key, value = arg.split("=")
+            key = key.strip()
+            value = value.strip()
         except ValueError:
             raise MalformedArgumentError.from_arg(arg)
         try:
@@ -119,3 +122,11 @@ def parse_args(*args, parser=None, repeated=False):
                 raise RepeatedArgumentError.from_arg(key, [ kwds[key], value ])
             kwds[key] = value
     return dict(kwds)
+
+def do_dry_run(dry, *args):
+    """Dry run."""
+    if dry:
+        for arg in args:
+            to_console(arg)
+        ctx = click.get_current_context()
+        ctx.exit()

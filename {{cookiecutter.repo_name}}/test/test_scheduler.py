@@ -3,8 +3,8 @@ import pytest
 
 
 @pytest.mark.task
-def test_run_task(scheduler, {{ cookiecutter.taskmodule_name }}):
-    cfg = {{ cookiecutter.taskmodule_name }}.cfg
+def test_run_task(scheduler, tasks):
+    cfg = tasks.cfg
     res = scheduler.run_task(cfg, cfg={
         't1': 10,
         't2': 20,

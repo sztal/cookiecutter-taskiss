@@ -6,7 +6,7 @@ from . import MODE as _mode
 broker_url = _cfg.getenvvar(_mode, 'celery_broker_url', fallback=None)
 result_backend = _cfg.getenvvar(_mode, 'celery_result_backend', fallback=None)
 # Included modules
-include = ['{{cookiecutter.repo_name}}.{{cookiecutter.taskmodule_name}}']
+include = ['{{cookiecutter.repo_name}}.tasks']
 # Other settings
 task_serializer = 'json'
 result_serializer = 'json'

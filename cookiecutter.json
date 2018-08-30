@@ -5,7 +5,6 @@
 	"project_name": "Taskiss",
     "repo_name": "taskiss",
     "cli_name": "ts",
-	"taskmodule_name": "tasks",
 	"project_short_description": "Easily extendable skeleton project for distributed data processing using MongoDB, Celery, RabbitMQ and Redis with optional webscraping module based on Scrapy.",
 	"release_date": "2018-08-31",
 	"year": "2018",

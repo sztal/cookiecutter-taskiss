@@ -35,7 +35,7 @@ setup(
         *find_packages()
     ],
     setup_requires=[
-        'pytest-runner',
+        'pytest-runner>=4.2<5',
     ],
     tests_require=[
         'pytest',

@@ -3,7 +3,7 @@ import click
 from celery.result import AsyncResult
 from {{ cookiecutter.repo_name }} import taskiss as ts
 from {{ cookiecutter.repo_name }}.utils import safe_print
-from ..utils import to_console, parse_args
+from ..utils import to_console, parse_args, do_dry_run
 
 
 @click.group()
@@ -79,10 +79,14 @@ def _(task, labels):
               help="Parsed args passed to the task (i.e. -e x=['a']).")
 @click.option('--get', '-g', type=int, required=False,
               help="Wait for given time to evaluate async results of the root task.")
-@click.option('--argparser', type=str, required=False, default='json')
-def _(task, recursive, timeout, wait, arg, evalarg, get, argparser):
+@click.option('--argparser', '-P', type=str, required=False, default='json',
+              help="Parser for parsed attributes. Defaults to JSON parser.")
+@click.option('--dry-run', is_flag=True, default=False,
+              help="Dry run: only show how the engine parses given arguments.")
+def _(task, recursive, timeout, wait, arg, parg, get, argparser, dry_run):
     """Run task."""
     kwds = { **parse_args(*arg), **parse_args(*parg, parser=argparser) }
+    do_dry_run(dry_run, kwds)
     queue = ts.scheduler.run_task(
         task=task,
         timeout=timeout,

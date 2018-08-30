@@ -2,9 +2,8 @@
 # pylint: disable=W0212
 import json
 import click
-from ..utils import eager_callback, pprint, parse_args, to_console
-from .utils import get_mongo_model
-from .utils import show_mongo_models, show_mongo_model_schema
+from ...utils import eager_callback, pprint, parse_args, to_console, do_dry_run
+from .utils import get_mongo_model, show_mongo_models, show_mongo_model_schema
 
 
 @click.group()
@@ -34,9 +33,9 @@ def _(path_or_name):
 @click.option('--skip', '-s', type=int, help="Skip first *n* documents.")
 @click.option('--order', '-o', type=str, multiple=True,
               help="Sort by fields (multiple allowed). Set to '-field_name' to sort descending.")
-@click.option('--dry', is_flag=True, default=False,
+@click.option('--dry-run', is_flag=True, default=False,
               help="Dry run: only show how the engine interprets the query.")
-def _(path_or_name, query, field, exclude, limit, skip, order, dry):
+def _(path_or_name, query, field, exclude, limit, skip, order, dry_run):
     """Run a find query against a MongoDB collection.
 
     Notes
@@ -44,13 +43,11 @@ def _(path_or_name, query, field, exclude, limit, skip, order, dry):
     Add the moment the interface does not support usage of regexp in queries.
     """
     query = json.loads(query)
-    if dry:
-        pprint(query)
-        return
+    do_dry_run(dry_run, query)
     model = get_mongo_model(path_or_name)
     s = slice(None, None)
     if limit and skip:
-        s = slice(skip, limit)
+        s = slice(skip, skip+limit)
     elif limit:
         s = slice(limit)
     elif skip:
@@ -71,14 +68,12 @@ def _(path_or_name, query, field, exclude, limit, skip, order, dry):
 @click.argument('query', nargs=1, type=str, required=True)
 @click.option('--parg', '-p', type=str, multiple=True,
               help="Additional arguments for MongoDB 'remove' method. Parsed as JSON.")
-@click.option('--dry', is_flag=True, default=False,
+@click.option('--dry-run', is_flag=True, default=False,
               help="Dry run: only show how the engine interprets the query.")
-def _(path_or_name, query, parg, dry):
+def _(path_or_name, query, parg, dry_run):
     """Run remove query against a MongoDB collection."""
     query = json.loads(query)
-    if dry:
-        pprint(query)
-        return
+    do_dry_run(dry_run, query)
     model = get_mongo_model(path_or_name)
     kwds = parse_args(*parg, parser='json')
     res = model.objects(__raw__=query).delete(write_concern=kwds)
@@ -94,22 +89,19 @@ def _(path_or_name, query, parg, dry):
               help="Allow updating multiple documents.")
 @click.option('--parg', '-p', multiple=True,
               help="Additional named arguments parsed as JSON strings.")
-@click.option('--dry', is_flag=True, default=False,
+@click.option('--dry-run', is_flag=True, default=False,
               help="Dry run: only show how the engine interprets the query.")
-def _(path_or_name, query, update, upsert, multiple, parg, dry):
+def _(path_or_name, query, update, upsert, multiple, parg, dry_run):
     """Update documents in MongoDB collection."""
     query = json.loads(query)
     update = json.loads(update)
-    if dry:
-        for doc in [ query, update ]:
-            pprint(doc)
-        return
+    do_dry_run(dry_run, query, update)
     coll = get_mongo_model(path_or_name)._get_collection()
     kwds = parse_args(*parg, parser='json')
     if multiple:
-        res = coll.update_many(query, update, **kwds)
+        res = coll.update_many(query, update, upsert=upsert, **kwds)
     else:
-        res = coll.update_one(query, update, **kwds)
+        res = coll.update_one(query, update, upsert=upsert, **kwds)
     return res
 
 @mongo.command(name='aggregate', help="Run an aggregate query againt a MongoDB collection.")
@@ -119,9 +111,9 @@ def _(path_or_name, query, update, upsert, multiple, parg, dry):
               help="Args passed to the task (i.e. -a x=10).")
 @click.option('--parg', '-p', type=str, multiple=True,
               help="Literal evaluated args passed to the task (i.e. -e x=['a']).")
-@click.option('--dry', is_flag=True, default=False,
+@click.option('--dry-run', is_flag=True, default=False,
               help="Dry run: only show how the engine interprets the query.")
-def _(path_or_name, pipeline, arg, parg, dry):
+def _(path_or_name, pipeline, arg, parg, dry_run):
     """Run an aggregate query against a collection.
 
     Additional keyword arguments are used to configure the aggregation process.
@@ -129,9 +121,7 @@ def _(path_or_name, pipeline, arg, parg, dry):
     collection class path/name.
     """
     pipeline = [ json.loads(stage) for stage in pipeline ]
-    if dry:
-        to_console(pipeline)
-        return
+    do_dry_run(dry_run, *pipeline)
     model = get_mongo_model(path_or_name)
     kwds = { **parse_args(*arg), **parse_args(*parg, parser='json') }
     cursor = model.objects.aggregate(*pipeline, **kwds)
