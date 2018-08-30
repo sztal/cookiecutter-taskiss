@@ -86,3 +86,13 @@ class BaseItemLoader(ItemLoader):
             if field in omit:
                 continue
             self.assign_selector(field)
+
+    def add_data(self, data):
+        """Add response (meta)data.
+
+        Parameters
+        ----------
+        data : dict-like
+            Metadata obtained from the response-request.
+        """
+        self.data = data

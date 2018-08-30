@@ -1,16 +1,15 @@
 # """Test cases for the base spider class."""
-# import pytest
+import pytest
 
 
-# @pytest.mark.scrapy
-# @pytest.mark.parametrize('limit', [None, 1])
-# @pytest.mark.parametrize('mode', ['debug'])
-# def test_spidercls(crawler_process, google_spider, limit, mode):
-#     """Test case for `BaseSpider`."""
-#     data = {}
-#     google_spider.data = data
-#     google_spider.limit = limit
-#     google_spider.mode = mode
-#     crawler_process.crawl(google_spider)
-#     crawler_process.start()
-#     assert data == {}
+@pytest.mark.scrapy
+def test_spidercls(crawler_process, wikipedia_spider):
+    """Test case for `BaseSpider`."""
+    data = []
+    limit = 10
+    wikipedia_spider.data = data
+    wikipedia_spider.limit = limit
+    crawler_process.crawl(wikipedia_spider)
+    crawler_process.start()
+    wikipedia_spider.args.limit = limit
+    assert data == [{ 'name': 'Wikipedia' }]

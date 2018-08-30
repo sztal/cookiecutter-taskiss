@@ -18,7 +18,7 @@ class ScrapyCLIExtraArgsInterface(BaseInterface):
         Limit for number of requests being made.
     mode : str or None
         Special mode the spider is run in.
-        Currently only value `debug` is supported and it set a `pdb`
+        Currently only value `debug` is supported and it sets a *Scrapy* shell
         breakpoint in the parse method right before the return statement.
     storage : str or None
         Type of storage used for data persistence.

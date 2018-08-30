@@ -30,7 +30,7 @@ class BaseSpider(CrawlSpider):
         Limit for number of requests being made.
     mode : str or None
         Special mode the spider is run in.
-        Currently only value `debug` is supported and it set a `pdb`
+        Currently only value `debug` is supported and it sets a *Scrapy* shell
         breakpoint in the parse method right before the return statement.
     storage : str or None
         Type of storage used for data persistence.
@@ -95,7 +95,6 @@ class BaseSpider(CrawlSpider):
         for key in ScrapyCLIExtraArgsInterface.schema.schema:
             if hasattr(cls, key):
                 args[key] = getattr(cls, key)
-                delattr(cls, key)
         cls.args = ScrapyCLIExtraArgsInterface(**args)
 
     def get_urls(self):
@@ -118,7 +117,6 @@ class BaseSpider(CrawlSpider):
 
     def start_requests(self):
         """Generate start requests."""
-        import pdb; pdb.set_trace()
         self.parse_extra_args()
         if self.test_url:
             urls = [ (self.test_url, { 'url': self.test_url }) ]
@@ -165,12 +163,11 @@ class BaseSpider(CrawlSpider):
 
     def parse(self, response):
         """Default response parsing method."""
-        import pdb; pdb.set_trace()
         item = self.parse_item(response)
         if self.args.mode and self.args.mode == 'debug':
             inspect_response(response, self)
         self.logger.debug("Spider '%s' parsed item from %s: %r",
-                          spider.name, response.url, item)
+                          self.name, response.url, item)
         return item
 
     def hash_string(self, string, salt=None):

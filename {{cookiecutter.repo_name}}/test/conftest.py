@@ -189,36 +189,37 @@ def item_loader():
 
     return TestItemLoader
 
-@pytest.fixture(scope='session')
+@pytest.fixture
 def crawler_process():
     """Fixture: *Scrapy* crawler process."""
     crawler_process = CrawlerProcess(get_project_settings())
     return crawler_process
 
-@pytest.fixture(scope='session')
-def google_spider():
-    """Fixture: test spider extracting content from the main page of *Google*."""
-    class GoogleItem(Item):
-        """Google item class."""
+@pytest.fixture
+def wikipedia_spider():
+    """Fixture: test spider extracting content from the main page of *Wikipedia*."""
+    class WikipediaItem(Item):
+        """Wikipedia item class."""
         name = Field()
 
-    class GoogleItemLoader(BaseItemLoader):
-        """Google item loader class."""
-        default_item_class = GoogleItem
-        container_sel = ('div#main', 'css')
-        name_sel = ('center > div > img::attr(alt)', 'css')
+    class WikipediaItemLoader(BaseItemLoader):
+        """Wikipedia item loader class."""
+        default_item_class = WikipediaItem
+        container_sel = ('div.central-textlogo-wrapper', 'css')
+        name_sel = ('div::text', 'css')
 
-    class GoogleSpider(BaseSpider):
-        """Google spider."""
-        name = 'google'
-        start_urls = ['www.google.com']
-        allowed_domains = ['google.com']
+    class WikipediaSpider(BaseSpider):
+        """Wikipedia spider."""
+        name = 'wikipedia'
+        item_loader = WikipediaItemLoader
+        start_urls = ['https://www.wikipedia.org/']
+        allowed_domains = [ 'wikipedia.org' ]
         data = []
 
         def parse(self, response):
             """Parse method."""
-            item = super().parse(responses)
+            item = super().parse(response)
             self.data.append(item)
             return item
 
-    return GoogleSpider
+    return WikipediaSpider
