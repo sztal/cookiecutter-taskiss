@@ -8,7 +8,7 @@
 #     https://doc.scrapy.org/en/latest/topics/settings.html
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
-from {{ cookiecutter.repo_name }}.config import cfg
+from {{ cookiecutter.repo_name }}.config import cfg, MODE
 
 BOT_NAME = '{{ cookiecutter.repo_name }}'
 

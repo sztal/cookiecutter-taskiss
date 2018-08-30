@@ -12,6 +12,6 @@ def hash_string(string, salt=None):
     salt : str, False or None
         Optional salt added to the string for additional obfuscation.
     """
-    if isinstance(salt, str):
+    if salt is not None:
         string += salt
     return hashlib.md5(string.encode('utf-8')).hexdigest()

@@ -165,7 +165,8 @@ class BaseSpider(Spider):
         item = self.parse_item(response)
         if self.mode and self.mode == 'debug':
             pdb.set_trace()
-        self.logger.debug(f"Parsed item from {response.url}: {item}")
+        self.logger.debug("Spider '%s' parsed item from %s: %r",
+                          spider.name, response.url, item)
         return item
 
     def hash_string(self, string, salt=None):

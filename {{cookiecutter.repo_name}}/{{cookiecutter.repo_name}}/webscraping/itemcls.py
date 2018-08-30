@@ -1,5 +1,4 @@
 """Base item and item loader classes."""
-from scrapy import Item
 from scrapy.loader import ItemLoader
 from scrapy.loader.processors import TakeFirst, MapCompose
 from .utils import normalize_web_content, strip
@@ -20,10 +19,17 @@ class BaseItemLoader(ItemLoader):
     # Methods -----------------------------------------------------------------
 
     def __init__(self, *args, **kwds):
-        """Initilization method."""
+        """Initilization method.
+
+        Parameters
+        ----------
+        omit : list of str
+            List of fields to omit.
+        """
         super().__init__(*args, **kwds)
         self._container = None
 
+    @property
     def fields(self):
         """Fields getter."""
         if self.default_item_class is None:
@@ -44,7 +50,7 @@ class BaseItemLoader(ItemLoader):
         else:
             raise ValueError("Unknown selector type: {}".format(selector_type))
 
-    def assign_selector(self, field_name, selector_name=None, omit=()):
+    def assign_selector(self, field_name, selector_name=None):
         """Assign selector to a field.
 
         Parameters
@@ -53,12 +59,10 @@ class BaseItemLoader(ItemLoader):
             Field name.
         selector_name : str
             Selector name. May not have the 'sel_' prefix.
-        omit : list of str
-            List of fields to omit.
         """
         if not selector_name:
             selector_name = field_name+'_sel'
-        selector_spec = getattr(self, sname, None)
+        selector_spec = getattr(self, selector_name, None)
         if selector_spec is None:
             return
         selector, selector_type = selector_spec
@@ -69,8 +73,16 @@ class BaseItemLoader(ItemLoader):
         else:
             raise ValueError(f"Unknown selector type: {selector_type}")
 
-    def setup(self):
-        """Setup loader selectors."""
+    def setup(self, omit=()):
+        """Setup loader selectors.
+
+        Parameters
+        ----------
+        omit : list of str
+            List of fields to omit.
+        """
         self.assign_container_selector()
         for field in self.fields:
+            if field in omit:
+                continue
             self.assign_selector(field)

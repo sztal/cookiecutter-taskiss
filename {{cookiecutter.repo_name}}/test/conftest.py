@@ -10,10 +10,13 @@ Tests can also be run within working
 import os
 import pytest
 from click.testing import CliRunner
+from scrapy import Item, Field
+from scrapy.loader.processors import MapCompose
 from {{ cookiecutter.repo_name }} import taskiss
 from {{ cookiecutter.repo_name }}.config import cfg, MODE
 from {{ cookiecutter.repo_name }}.taskiss.scheduler import Scheduler
 from {{ cookiecutter.repo_name }}.config.taskiss import include
+from {{ cookiecutter.repo_name }}.webscraping.itemcls import BaseItemLoader
 # Import tasks only if taskiss object is defined
 if taskiss:
         import {{ cookiecutter.repo_name }}.tasks as _tasks
@@ -116,3 +119,69 @@ def mod_predicate():
 def cli_runner():
     """Command-line test runner."""
     return CliRunner()
+
+# Fixtures for webscrapign testing --------------------------------------------
+
+@pytest.fixture(scope='session')
+def html_markup():
+    """Fixture: some HTML markup."""
+    return """
+    <html>
+    <head>
+        <meta name="date" content="2009-01-02" scheme="YYYY-MM-DD">
+    </head>
+    <body>
+        <div>
+            <!-- some comment -->
+            <h1>Title</h1>
+            <section>
+                <div class="wrap">
+                    <p>
+                        Some text goes here. This is a tremendously interesting article!
+                        Can't stop reading it, oh my!
+                    </p>
+                    <p>
+                        Even better! Here goes a next paragraph!
+                        What a feast for a hungry reader!
+                    </p>
+                    <h2>Subtitle</h2>
+                    <p>
+                        Another story.
+                        This time it is boring as hell.
+                        Better stop reading now.
+                    </p>
+                </div>
+            </section>
+            <footer>
+                <span>Some footer</span>
+            </footer>
+        </div>
+    </body>
+    </html>
+    """
+
+@pytest.fixture(scope='session')
+def item_loader():
+    """Fixture: test item loader class."""
+    class TestItem(Item):
+        """Test item class."""
+        date = Field()
+        title = Field()
+        subtitle = Field()
+        content = Field()
+        footer = Field()
+
+    class TestItemLoader(BaseItemLoader):
+        """Test item loader class."""
+        default_item_class = TestItem
+
+        container_sel = ('body > div', 'css')
+        date_sel = ('/html/head/meta/@content', 'xpath')
+        title_sel = ('h1::text', 'css')
+        subtitle_sel = ('h2::text', 'css')
+        content_sel = ('div.wrap > p::text', 'css')
+        footer_sel = ('footer > span::text', 'css')
+
+        content_out = MapCompose()
+
+    return TestItemLoader

@@ -3,11 +3,13 @@
 This module also contain processors that for sake of avoiding circular imports
 can not be placed in `misc.processors`.
 """
+import re
 from scrapy.http import HtmlResponse
 from w3lib.html import remove_tags, remove_comments, strip_html5_whitespace
 from w3lib.html import replace_entities, replace_escape_chars, replace_tags
 import tldextract as tld
 
+_rx_web_sectionize = re.compile(r"\n|\s\s+|\t")
 
 def get_url_domain(url):
     """Get domain from an URL.
@@ -35,7 +37,7 @@ def is_url_in_domains(url, domains):
         domains = [ domains ]
     return get_url_domain(url) in domains
 
-def normalize_web_content(x, keep=('h2', 'h3', 'h4', 'h5', 'h6', 'strong'),
+def normalize_web_content(x, keep=('h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong'),
                           token='____SECTION____'):
     """Normalize web content.
 
@@ -57,7 +59,9 @@ def normalize_web_content(x, keep=('h2', 'h3', 'h4', 'h5', 'h6', 'strong'),
         x = replace_escape_chars(x)
     except (TypeError, AttributeError):
         pass
-    return x
+    for part in _rx_web_sectionize.split(x):
+        if part:
+            yield part
 
 def load_item(body, item_loader, item=None, url='placeholder_url',
               callback=None, encoding='utf-8'):
@@ -76,7 +80,7 @@ def load_item(body, item_loader, item=None, url='placeholder_url',
         For most of cases it shoul left as it is.
     callback : func
         Optional callback function to perform on item loader after setup.
-        Call back should not return any value,
+        Callback should not return any value,
         but only modify the state of the loader.
         This meant mostly to use additional setup methods
         defined on a given item loader class.
@@ -113,12 +117,14 @@ def sectionize(parts, first_is_heading=False):
     first_is_heading : bool
         Should first element be treated as heading in lists of length greater than 1.
     """
+    parts = parts.copy()
     if len(parts) <= 1:
         return parts
     first = []
     if not first_is_heading:
-        first.append(parts.pop())
-    sections = first +[ " ".join(parts[i:i+2]) for i in range(len(parts), 2) ]
+        first.append(parts[0])
+        del parts[0]
+    sections = first + [ "\n".join(parts[i:i+2]) for i in range(0, len(parts), 2) ]
     return sections
 
 def strip(x):
